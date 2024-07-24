@@ -29,19 +29,4 @@ const question = async () => {
   rl.close();
 };
 
-const question2 = () => {
-  const rl = readline.createInterface({ input, output });
-
-  rl.question("Siapa nama kamu? ", (answer) => {
-    console.log(`Terimakasih telah mampir ${answer}`);
-    rl.question("Berapa nomor telepon kamu? ", (answer) => {
-      console.log(`Nomor telepon kamu adalah: ${answer}`);
-      rl.question("Tuliskan email kamu: ", (answer) => {
-        console.log(`Email kamu adalah: ${answer}`);
-        rl.close();
-      });
-    });
-  });
-};
-
 question();
