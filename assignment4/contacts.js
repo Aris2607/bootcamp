@@ -28,6 +28,7 @@ const readFile = async () => {
   }
 };
 
+// * Function untuk Menulis data
 const write = async (file, values) => {
   await writeFile(file, JSON.stringify(values, null, 2));
 };
