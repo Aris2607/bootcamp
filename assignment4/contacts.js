@@ -1,9 +1,14 @@
 import { createInterface } from "readline/promises";
 import { stdin, stdout } from "process";
-import { readFile as _readFile, writeFile } from "fs/promises";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import validator from "validator";
 import chalk from "chalk";
+import {
+  readFile,
+  write,
+  nameValidation,
+  nameNotFound,
+} from "./util/contactsUtil.js";
 
 // * Path Direktori
 const dirPath = "./data";
@@ -15,24 +20,9 @@ const filePath = `${dirPath}/contacts.json`;
 !existsSync(dirPath) ? mkdirSync(dirPath) : "";
 
 // * Cek apakah file exists
-!existsSync(filePath) ? await writeFile(filePath, "[]") : "";
+!existsSync(filePath) ? await write(filePath, "[]") : "";
 
-// * Membaca file contacts
-const readFile = async () => {
-  try {
-    const data = await _readFile(filePath, "utf-8");
-    const jsonArray = JSON.parse(data);
-    return jsonArray;
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-// * Function untuk Menulis data
-const write = async (file, values) => {
-  await writeFile(file, JSON.stringify(values, null, 2));
-};
-
+// ! Deprecated. Function sudah tidak digunakan lagi
 // * Membuat pertanyaan
 const question = async (q) => {
   const rl = createInterface({ stdin, stdout });
@@ -46,40 +36,55 @@ const question = async (q) => {
 
 // * Menyimpan data kontak
 const saveContact = async (name, phone, email) => {
-  const contact = {
-    name,
-    phone,
-    email,
-  };
+  try {
+    const contact = {
+      name,
+      phone,
+      email,
+    };
 
-  // * Membaca file contacts.json
-  const contacts = await readFile();
+    // * Membaca file contacts.json
+    const contacts = await readFile();
+    const trimmedName = name.trim();
 
-  console.log(chalk.blue(`Your name is: ${name}`));
+    // * Validasi nama
+    if (validator.isEmpty(trimmedName)) {
+      throw new Error("Nama tidak boleh kosong!");
+    }
 
-  // * Validasi mobile phone
-  if (!validator.isMobilePhone(phone, "id-ID")) {
-    console.log(chalk.red("Nomor telepon tidak valid"));
-    return false;
+    if (await nameValidation(name)) {
+      throw new Error(
+        `Kontak ${name} sudah terdaftar! Silahkan pilih nama lain`
+      );
+    } else {
+      console.log(`Nama tersedia...`);
+    }
+
+    // * Validasi mobile phone
+    if (!validator.isMobilePhone(phone, "id-ID")) {
+      console.log(chalk.red("Nomor telepon tidak valid"));
+      return false;
+    }
+
+    console.log(chalk.blue(`Nomor kamu: ${phone}`));
+
+    // * Validasi Email
+    if (!validator.isEmail(email)) {
+      console.log(chalk.red("Email tidak valid!"));
+      return false;
+    }
+
+    console.log(chalk.blue(`Email kamu: ${email}`));
+
+    //  * Push data baru
+    contacts.push(contact);
+
+    // * Menulis ulang data kontak ke dalam file contacts.json
+    await write(filePath, contacts);
+    console.log(chalk.green("Kontak berhasil ditambahkan!"));
+  } catch (err) {
+    console.error("Error:", err.message);
   }
-
-  console.log(chalk.blue(`Your mobile number is: ${phone}`));
-
-  // * Validasi Email
-  if (!validator.isEmail(email)) {
-    console.log(chalk.red("Email tidak valid!"));
-    return false;
-  }
-
-  console.log(chalk.blue(`Your email is: ${email}`));
-
-  //  * Push data baru
-  contacts.push(contact);
-
-  // * Menulis ulang data kontak ke dalam file contacts.json
-  // await writeFile(filePath, JSON.stringify(contacts, null, 2));
-  await write(filePath, contacts);
-  console.log("Kontak berhasil ditambahkan!");
 };
 
 // * Menghapus kontak
@@ -103,7 +108,7 @@ const removeContact = async (name) => {
 
   // * Menimpa object lama dengan object baru
   await write(filePath, contact);
-  console.log(chalk.blue(`Berhasil menghapus kontak: ${name}`));
+  console.log(chalk.green(`Berhasil menghapus kontak: ${name}`));
 };
 
 // * Menampilkan list dari seluruh kontak
@@ -114,9 +119,9 @@ const listContact = async () => {
 
     // * Membuat object baru untuk di tampilkan
     const contact = Object.values(contacts).map((contact, i) => {
-      console.log(chalk.green(`Kontak ${i + 1}`));
+      console.log(chalk.blue(`Kontak ${i + 1}`));
       console.log(
-        chalk.green(`Nama: ${contact.name}
+        chalk.blue(`Nama: ${contact.name}
 Mobile: ${contact.phone} \n`)
       );
     });
@@ -134,13 +139,14 @@ const detailContact = async (name) => {
     const contacts = await readFile();
 
     // * Mencari data kontak untuk ditampilkan menggunakan method .find
-    const contact = Object.values(contacts).find((contact) => {
-      if (contact.name.toLowerCase() != name.toLowerCase()) {
-        throw new Error(`Kontak ${name} tidak ditemukan!`);
-      } else {
-        return contact.name.toLowerCase() == name.toLowerCase();
-      }
-    });
+    const contact = Object.values(contacts).find(
+      (contact) => contact.name.toLowerCase() == name.toLowerCase()
+    );
+
+    // * Cek jika nama tidak ditemukan
+    if (await nameNotFound(name)) {
+      throw new Error(`Kontak ${name} tidak ditemukan!`);
+    }
 
     // * Menampilkan detail kontak
     console.log(
@@ -160,27 +166,33 @@ const updateContact = async (oldName, name, phone, email = "") => {
     // * Membaca file contacts.json
     const contacts = await readFile();
 
-    // * Membuat object baru dengan mengubah salah satu data kontak yang dipilih.
-    // * Dan menggantinya dengan data baru
-    const newContact = Object.values(contacts).map((contact) => {
-      // ! Belum selesai, masih banyak hal yang harus dikembangkan
-      // * Cek apakah kontak yang akan diubah tersedia
-      // if (contact.name.toLowerCase() != oldName.toLowerCase()) {
-      //   console.error(`Kontak ${oldName} tidak ditemukan!`);
-      //   throw new Error("Kontak yang dipilih tidak tersedia!");
-      // }
-      if (contact.name.toLowerCase() == oldName.toLowerCase()) {
-        contact.name = name;
-        contact.phone = phone;
-        contact.email = email;
+    // * Mendapatkan index dari object lama yang ingin diubah
+    const getIndex = Object.values(contacts).findIndex(
+      (contact) => contact.name.toLowerCase() == oldName.toLowerCase()
+    );
+
+    if (getIndex == -1) {
+      throw new Error(`Kontak ${oldName} tidak ditemukan!`);
+    } else {
+      const newContact = Object.values(contacts).map((contact) => {
+        if (contact.name.toLowerCase() == oldName.toLowerCase()) {
+          contact.name = name;
+          contact.phone = phone;
+          contact.email = email;
+        }
+
+        return contact;
+      });
+
+      // * Validasi nama
+      if (await nameValidation(name)) {
+        throw new Error(`Kontak ${name} sudah ada! Silahkan pilih nama lain`);
       }
-      return contact;
-    });
+      write(filePath, newContact);
+    }
 
     // * Pesan jika berhasil
-    console.log(`Berhasil mengubah kontak ${oldName}`);
-
-    write(filePath, newContact);
+    console.log(chalk.green(`Berhasil mengubah kontak: ${oldName}`));
   } catch (error) {
     console.error("Gagal mengubah data: ", error.message);
   }
