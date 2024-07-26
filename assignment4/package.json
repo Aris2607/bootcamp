@@ -1,0 +1,19 @@
+{
+  "name": "assignment2",
+  "version": "1.0.0",
+  "description": "Assignment",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app",
+    "fol": "ls"
+  },
+  "author": "Mochamad Aris",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "validator": "^13.12.0",
+    "yargs": "^16.2.0"
+  }
+}
