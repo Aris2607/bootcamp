@@ -1,0 +1,18 @@
+{
+  "name": "assignment5",
+  "version": "1.0.0",
+  "description": "Assignment 5",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Mochamad Aris",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-ejs-layouts": "^2.5.1"
+  }
+}
