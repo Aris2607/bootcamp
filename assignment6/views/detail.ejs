@@ -1,0 +1,141 @@
+<div class="container my-5">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Detail Contact</h3>
+          <p class="card-text">Name : <%= detailContact.name %></p>
+          <p class="card-text">Mobile : <%= detailContact.phone %></p>
+          <p class="card-text">Email : <%= detailContact.email %></p>
+          <div class="act-btn mb-2">
+            <span
+              class="badge rounded-pill bg-primary px-3 py-2"
+              type="button"
+              data-bs-toggle="modal"
+              data-bs-target="#updateModal"
+              ><a href="#">Edit</a></span
+            >
+            <form
+              action="/contact/<%= detailContact.id %>?_method=DELETE"
+              method="POST"
+            >
+              <button
+                class="badge rounded-pill bg-danger px-3 py-2"
+                type="submit"
+              >
+                Delete
+              </button>
+            </form>
+          </div>
+          <span><a href="/contact">&larr; Back</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Body-->
+<!-- Modal -->
+<div
+  class="modal fade"
+  id="updateModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="modalTitleId"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form
+        id="updateForm"
+        action="/contact/<%= detailContact.id %>?_method=PUT"
+        method="POST"
+      >
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitleId">Update</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="container-fluid">
+            <div class="mb-3">
+              <!-- Form name -->
+              <label for="name" class="form-label">Name</label>
+              <input
+                type="text"
+                class="form-control"
+                name="name"
+                id="name"
+                aria-describedby="helpId"
+                placeholder="Name"
+                value="<%= detailContact.name %>"
+              />
+            </div>
+            <!-- Form Email -->
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                type="email"
+                class="form-control"
+                name="email"
+                id="email"
+                aria-describedby="emailHelpId"
+                placeholder="example@gmail.com"
+                value="<%= detailContact.email %>"
+              />
+            </div>
+            <!-- Form Mobile Phone -->
+            <div class="mb-3">
+              <label for="phone" class="form-label">Mobile</label>
+              <input
+                type="text"
+                class="form-control"
+                name="phone"
+                id="phone"
+                aria-describedby="helpId"
+                placeholder="1234xxx"
+                value="<%= detailContact.phone %>"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("updateForm").onsubmit = function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+    const params = new URLSearchParams(formData);
+
+    fetch(`/contact/<%= detailContact.id %>?_method=PUT`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    })
+      .then((response) => {
+        if (response.redirected) {
+          window.location.href = response.url;
+        }
+      })
+      .catch((err) => console.error("Gagal memperbarui kontak:", err));
+  };
+</script>
