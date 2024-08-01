@@ -1,18 +1,26 @@
-<div class="container">
-  <h1 class="text-center my-3">Contacts List</h1>
+<div class="container" style="background-color: #fff;">
+  <div class="row">
+    <div class="col-md-12">
+      <h1 class="text-center">Contacts List</h1>
+    </div>
+  </div>
 
-  <div class="table-responsive">
+  <div class="table-responsive overflow-hidden">
     <!-- Button trigger modal -->
-    <button
-      type="button"
-      class="btn btn-primary btn-lg add-btn"
-      data-bs-toggle="modal"
-      data-bs-target="#modalId"
-    >
-      Add
-    </button>
+     <div class="row">
+      <div class="col-md-3">
+        <button
+          type="button"
+          class="btn btn-primary btn-md add-btn px-3 py-2"
+          data-bs-toggle="modal"
+          data-bs-target="#addContactModal"
+        >
+          <i class="fa-solid fa-plus"></i> Add
+        </button>
+      </div>
+     </div>
     <table
-      class="table mx-auto mt-2 table-striped table-hover w-50 text-center"
+      class="table mt-2 table-hover text-center"
     >
       <thead>
         <tr>
@@ -23,105 +31,123 @@
         </tr>
       </thead>
       <tbody>
-        <% let i = 1; %> <% if(contacts.length == 0) { %>
-        <td colspan="3" class="text-center text-danger">Data Kontak Kosong</td>
-        <% } else {%> <% contacts.forEach(contact => { %>
+        <% if (contacts.length === 0) { %>
         <tr>
-          <td><%= i %></td>
+          <td colspan="4" class="text-center text-danger">
+            Data Kontak Kosong
+          </td>
+        </tr>
+        <% } else { %> <% contacts.forEach((contact, index) => { %>
+        <tr>
+          <td><%= index + 1 %></td>
           <td><%= contact.name %></td>
           <td><%= contact.phone %></td>
-          <td><span class="badge rounded-pill bg-primary"><a class="text-light" href="/contact/<%= contact.id %>">Detail</a></span></td>
+          <td>
+            <span class="badge rounded-pill bg-primary px-3 py-2"
+              ><a class="text-light" href="/contact/<%= contact.id %>"
+                >&#9432; Detail</a
+              ></span
+            >
+          </td>
         </tr>
-        <% i++ %> <% })} %>
+        <% }); %> <% } %>
       </tbody>
     </table>
   </div>
+
   <!-- Modal -->
   <div
     class="modal fade"
-    id="modalId"
+    id="addContactModal"
     tabindex="-1"
-    role="dialog"
-    aria-labelledby="modalTitleId"
+    aria-labelledby="addContactModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog">
       <div class="modal-content">
         <form action="/contact/add" method="POST">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalTitleId">Modal title</h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
-        </div>
-        <div class="modal-body">
-          <div class="container-fluid">
-              <div class="mb-3">
-                <!-- Form name -->
-                <label for="name" class="form-label">Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="name"
-                  id="name"
-                  aria-describedby="helpId"
-                  placeholder="Name"
-                />
-              </div>
-              <!-- Form Email -->
-              <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  name="email"
-                  id="email"
-                  aria-describedby="emailHelpId"
-                  placeholder="example@gmail.com"
-                />
-              </div>
-              <!-- Form Mobile Phone -->
-              <div class="mb-3">
-                <label for="phone" class="form-label">Mobile</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="phone"
-                  id="phone"
-                  aria-describedby="helpId"
-                  placeholder="1234xxx"
-                />
-              </div>
+          <div class="modal-header">
+            <h5 class="modal-title" id="addContactModalLabel">Add Contact</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <% if (errors && errors.length > 0) { %>
+            <div class="alert alert-danger">
+              <ul>
+                <% errors.forEach(error => { %>
+                <li><%= error.msg %></li>
+                <% }); %>
+              </ul>
+            </div>
+            <% } %>
+            <div class="mb-3">
+              <label for="name" class="form-label">Name</label>
+              <input
+                type="text"
+                class="form-control"
+                name="name"
+                id="name"
+                placeholder="Name"
+                value="<%= formData.name %>"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                type="email"
+                class="form-control"
+                name="email"
+                id="email"
+                placeholder="example@gmail.com"
+                value="<%= formData.email %>"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone</label>
+              <input
+                type="text"
+                class="form-control"
+                name="phone"
+                id="phone"
+                placeholder="1234xxx"
+                value="<%= formData.phone %>"
+              />
             </div>
           </div>
           <div class="modal-footer">
             <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-          Close
-        </button>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </form>
-      </div>
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="submit" id="submit-btn" class="btn btn-primary">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<!-- Open modal if there are errors -->
 <script>
-  var modalId = document.getElementById("modalId");
-
-  modalId.addEventListener("show.bs.modal", function (event) {
-    // Button that triggered the modal
-    let button = event.relatedTarget;
-    // Extract info from data-bs-* attributes
-    let recipient = button.getAttribute("data-bs-whatever");
-
-    // Use above variables to manipulate the DOM
+  document.addEventListener('DOMContentLoaded', (event) => {
+    <% if (showModal) { %>
+      var addContactModal = new bootstrap.Modal(document.getElementById('addContactModal'));
+      addContactModal.show();
+    <% } %>
   });
+</script>
+
+<script>
+  console.log("showModal:", <%= showModal %>);
 </script>
