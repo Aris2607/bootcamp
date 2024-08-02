@@ -6,34 +6,57 @@ import morgan from "morgan";
 import fs from "fs/promises";
 import methodOverride from "method-override";
 import { body, validationResult } from "express-validator";
-import session from "express-session";
-import flash from "connect-flash";
+// import session from "express-session";
+// import flash from "connect-flash";
+// import { db } from "./db.js";
+import pg from "pg";
+
+const { Pool } = pg;
+const client = new Pool({
+  user: "postgres",
+  password: "hiragana1",
+  host: "localhost",
+  port: "5432",
+  database: "postgres",
+});
+
+// * Koneksi ke database
+client
+  .connect()
+  .then(() => {
+    console.log("Connected to PostgreSQL database");
+  })
+  .catch((err) => {
+    console.error("Error connecting to PostgreSQL database", err);
+  });
 
 const app = express();
 const PORT = 3000;
 
-// Determine the directory name of the current module file
+// * Determine the directory name of the current module file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const read = async (filePath) => await fs.readFile(filePath, "utf-8");
+// * Read File
+// const read = async (filePath) => await fs.readFile(filePath, "utf-8");
 
-const duplicateName = async (filePath, data, id = null) => {
-  const fileBuffer = await read(filePath);
-  const contacts = JSON.parse(fileBuffer);
+// * Validasi duplikat nama
+const duplicateName = async (name, id = null) => {
+  try {
+    const query = id
+      ? 'SELECT * FROM public."Contact" WHERE name = $1 AND id != $2'
+      : 'SELECT * FROM public."Contact" WHERE name = $1';
+    const params = id ? [name, id] : [name];
 
-  const duplicate = contacts.find(
-    (contact) =>
-      contact.name.toLowerCase() === data.name.toLowerCase() &&
-      contact.id !== id
-  );
-
-  if (duplicate) {
-    return {
-      msg: "Nama sudah ada, silahkan pilih nama lain",
-    };
+    const result = await client.query(query, params);
+    if (result.rows.length > 0) {
+      return { msg: "Nama sudah ada, silahkan pilih nama lain" };
+    }
+    return null;
+  } catch (err) {
+    console.error("Error checking duplicate name:", err);
+    return { msg: "Error checking duplicate name" };
   }
-  return null;
 };
 
 app.set("view engine", "ejs");
@@ -45,56 +68,67 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
-app.use(
-  session({
-    secret: "aHqhpUsZdFW7tqjE",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
-app.use(flash());
+// app.use(
+//   session({
+//     secret: "aHqhpUsZdFW7tqjE",
+//     resave: false,
+//     saveUninitialized: true,
+//   })
+// );
+// app.use(flash());
 
+// * Route Home
 app.get("/", (req, res) => {
   res.render("index", { title: "Home" });
 });
 
+// * Route About Page
 app.get("/about", (req, res) => {
   res.render("about", { title: "About" });
 });
 
+// * Route Contact Page
 app.get("/contact", async (req, res) => {
-  const fileBuffer = await read(path.join(__dirname, "data", "contacts.json"));
-  const contacts = JSON.parse(fileBuffer);
-  contacts.sort((a, b) => b.id - a.id);
-
-  res.render("contact", {
-    contacts,
-    title: "Contact",
-    errors: [],
-    formData: {},
-    showModal: false,
-    message: "OK",
-    messageType: "Success",
-  });
+  try {
+    // * Query
+    const result = await client.query(
+      'SELECT * FROM public."Contact" ORDER BY id DESC'
+    );
+    res.render("contact", {
+      contacts: result.rows,
+      title: "Contact",
+      errors: [],
+      formData: {},
+      showModal: false,
+      message: "OK",
+      messageType: "Success",
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
+// * Route Detail Kontak
 app.get("/contact/:idContact", async (req, res) => {
-  const fileBuffer = await read(path.join(__dirname, "data", "contacts.json"));
-  const contacts = JSON.parse(fileBuffer);
-  const detailContact = contacts.find(
-    (contact) => contact.id === parseInt(req.params.idContact)
-  );
-
-  res.render("detail", {
-    detailContact,
-    title: "Detail Contact",
-    errors: [], // Tambahkan baris ini
-    formData: {}, // Tambahkan baris ini
-    isUpdate: false, // Tambahkan baris ini
-    showModal: false,
-  });
+  try {
+    const result = await client.query(
+      'SELECT * FROM public."Contact" WHERE id = $1',
+      [req.params.idContact]
+    );
+    res.render("detail", {
+      detailContact: result.rows[0],
+      title: "Detail Contact",
+      errors: [],
+      formData: {},
+      isUpdate: false,
+      showModal: false,
+    });
+  } catch (err) {
+    console.error("Error executing query", err);
+  }
 });
 
+// * Route Menambahkan Kontak
 app.post(
   "/contact/add",
   [
@@ -108,65 +142,45 @@ app.post(
     let errors = validationResult(req).array();
     const formData = req.body;
 
-    const duplicateError = await duplicateName(
-      path.join(__dirname, "data", "contacts.json"),
-      req.body
-    );
-
-    if (duplicateError) {
-      errors.push(duplicateError);
-    }
-
-    if (errors.length > 0) {
-      const fileBuffer = await read(
-        path.join(__dirname, "data", "contacts.json")
-      );
-      const contacts = JSON.parse(fileBuffer);
-
-      return res.render("contact", {
-        contacts,
-        title: "Contact",
-        errors: errors,
-        formData,
-        showModal: true,
-      });
-    }
-
     try {
-      const newContact = { id: Date.now(), ...req.body };
-      const filePath = path.join(__dirname, "data", "contacts.json");
-      const fileBuffer = await read(filePath);
-      const contacts = JSON.parse(fileBuffer);
+      const duplicateError = await duplicateName(req.body.name);
+      if (duplicateError) {
+        errors.push(duplicateError);
+      }
 
-      contacts.push(newContact);
-      await fs.writeFile(filePath, JSON.stringify(contacts, null, 2));
+      if (errors.length > 0) {
+        const result = await client.query('SELECT * FROM public."Contact"');
+        return res.render("contact", {
+          contacts: result.rows,
+          title: "Contact",
+          errors,
+          formData,
+          showModal: true,
+        });
+      }
 
-      req.flash("success_msg", "Kontak berhasil ditambahkan!");
+      await client.query(
+        'INSERT INTO public."Contact" (name, phone, email) VALUES ($1, $2, $3)',
+        [req.body.name, req.body.phone, req.body.email]
+      );
+
+      // req.flash("success_msg", "Kontak berhasil ditambahkan!");
       res.redirect("/contact");
     } catch (err) {
       console.error("Gagal menambahkan kontak:", err);
-      req.flash("error_msg", "Gagal menambahkan kontak!");
+      // req.flash("error_msg", "Gagal menambahkan kontak!");
       res.redirect("/contact");
     }
   }
 );
 
+// * Route Menghapus Kontak
 app.delete("/contact/:idContact", async (req, res) => {
   try {
-    console.log("Delete request received for ID:", req.params.idContact);
-    const filePath = path.join(__dirname, "data", "contacts.json");
-    const fileBuffer = await read(filePath);
-    const contacts = JSON.parse(fileBuffer);
-
-    const filteredContacts = contacts.filter(
-      (contact) => contact.id !== parseInt(req.params.idContact)
+    const result = await client.query(
+      'DELETE FROM public."Contact" WHERE id = $1',
+      [req.params.idContact]
     );
-
-    if (filteredContacts.length === contacts.length) {
-      throw new Error("Nama kontak tidak ditemukan!");
-    }
-
-    await fs.writeFile(filePath, JSON.stringify(filteredContacts, null, 2));
     res.redirect("/contact");
   } catch (err) {
     console.error("Gagal menghapus kontak:", err);
@@ -174,6 +188,7 @@ app.delete("/contact/:idContact", async (req, res) => {
   }
 });
 
+// * Route Mengubah Kontak
 app.put(
   "/contact/:idContact",
   [
@@ -184,34 +199,24 @@ app.put(
       .withMessage("Nomor telepon tidak valid!"),
   ],
   async (req, res) => {
-    console.log("PUT route hit");
-
-    const errors = validationResult(req);
+    let errors = validationResult(req).array();
     const formData = req.body;
     const idContact = req.params.idContact;
 
-    console.log("Validation result:", errors.array());
-    console.log("Form data:", formData);
-    console.log("Contact ID:", idContact);
+    const duplicateError = await duplicateName(req.body.name);
+    if (duplicateError) {
+      errors.push(duplicateError);
+    }
 
-    if (!errors.isEmpty()) {
-      console.log("Validation errors found");
-
-      const fileBuffer = await read(
-        path.join(__dirname, "data", "contacts.json")
+    if (errors.length > 0) {
+      const result = await client.query(
+        'SELECT * FROM public."Contact" WHERE id = $1',
+        [idContact]
       );
-      const contacts = JSON.parse(fileBuffer);
-      const detailContact = contacts.find(
-        (contact) => contact.id === parseInt(idContact)
-      );
-
-      console.log("Detail contact:", detailContact);
-      console.log("Rendering detail page with errors");
-
       return res.render("detail", {
-        detailContact,
+        detailContact: result.rows[0],
         title: "Detail Contact",
-        errors: errors.array(),
+        errors,
         formData,
         showModal: true,
         isUpdate: true,
@@ -219,22 +224,10 @@ app.put(
     }
 
     try {
-      console.log("No validation errors. Proceeding to update contact");
-
-      const filePath = path.join(__dirname, "data", "contacts.json");
-      const fileBuffer = await read(filePath);
-      const contacts = JSON.parse(fileBuffer);
-
-      const updatedContacts = contacts.map((contact) =>
-        contact.id === parseInt(idContact)
-          ? { ...contact, ...formData }
-          : contact
+      await client.query(
+        'UPDATE public."Contact" SET name = $1, phone = $2, email = $3 WHERE id = $4',
+        [formData.name, formData.phone, formData.email, idContact]
       );
-
-      console.log("Updated contacts:", updatedContacts);
-
-      await fs.writeFile(filePath, JSON.stringify(updatedContacts, null, 2));
-      console.log("Data updated successfully. Redirecting to /contact");
       res.redirect("/contact");
     } catch (err) {
       console.error("Gagal memperbarui kontak:", err);
