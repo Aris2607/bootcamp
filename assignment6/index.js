@@ -202,8 +202,6 @@ app.put(
     let errors = validationResult(req).array();
     const formData = req.body;
     const idContact = req.params.idContact;
-
-    const duplicateError = await duplicateName(req.body.name, req.body.id);
     if (duplicateError) {
       errors.push(duplicateError);
     }
