@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import morgan from "morgan";
-import fs from "fs/promises";
+// import fs from "fs/promises";
 import methodOverride from "method-override";
 import { body, validationResult } from "express-validator";
 // import session from "express-session";
@@ -203,7 +203,7 @@ app.put(
     const formData = req.body;
     const idContact = req.params.idContact;
 
-    const duplicateError = await duplicateName(req.body.name);
+    const duplicateError = await duplicateName(req.body.name, req.body.id);
     if (duplicateError) {
       errors.push(duplicateError);
     }
