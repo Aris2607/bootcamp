@@ -1,0 +1,17 @@
+li {
+  list-style-type: none;
+  cursor: pointer;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+nav ul {
+  display: flex;
+}
+
+nav ul li {
+  padding: 12px 18px;
+}
