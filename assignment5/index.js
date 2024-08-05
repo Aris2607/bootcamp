@@ -1,7 +1,9 @@
-import express from "express";
+import express, { json } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
+import morgan from "morgan";
+import fs from "fs/promises";
 
 const app = express();
 const PORT = 3000;
@@ -10,19 +12,39 @@ const PORT = 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const read = async (filePath) => await fs.readFile(filePath, "utf-8");
+
 app.set("view engine", "ejs");
 
+app.use(expressLayouts);
+
+app.set("layout", "layouts/layout");
+
+app.use((req, res, next) => {
+  console.log("Time:", Date.now());
+  next();
+});
+
+app.use(morgan("dev"));
+
+app.use(express.static(path.join(__dirname, "public"))); // Menambahkan ini
+
 app.get("/", (req, res) => {
-  //   res.sendFile(path.join(__dirname, "index.html"));
-  res.render("index");
+  res.render("index", { title: "Home" });
 });
 
 app.get("/about", (req, res) => {
-  res.render("about");
-  //   res.sendFile(path.join(__dirname, "about.html"));
+  res.render("about", { title: "About" });
 });
 
-app.get("/contact", (req, res) => {
+app.get("/contact", async (req, res) => {
+  const fileBuffer = await read(path.join(__dirname, "data", "contacts.json"));
+  const contacts = JSON.parse(fileBuffer);
+  console.log(contacts);
+  res.render("contact", { contacts, title: "Contact" });
+});
+
+app.get("/other", (req, res) => {
   const contacts = [
     {
       name: "Aris",
@@ -37,14 +59,8 @@ app.get("/contact", (req, res) => {
       email: "aries221@gmail.com",
     },
   ];
-  res.render("contact", { contacts });
-  //   res.sendFile(path.join(__dirname, "contact.html"));
-});
 
-// Updated route with proper parameter handling
-app.get("/product/:productId", (req, res) => {
-  const { category } = req.query;
-  res.send(`Product ID: ${req.params.productId}, Category ID: ${category}`);
+  res.render("other", { contacts, title: "Other Page" });
 });
 
 // 404 handler for undefined routes

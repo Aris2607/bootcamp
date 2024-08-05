@@ -1,0 +1,1 @@
+const nama: string = "p";
