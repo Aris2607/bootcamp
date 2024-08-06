@@ -3,13 +3,16 @@ const Header = ({ setContent }) => {
     <nav>
       <h1>Bootcamp batch 10</h1>
       <ul>
-        <li className="nav-link" onClick={() => setContent("Batch")}>
+        <li className="nav-link" onClick={() => setContent("home")}>
+          Home
+        </li>
+        <li className="nav-link" onClick={() => setContent("batch")}>
           Batch
         </li>
-        <li className="nav-link" onClick={() => setContent("About")}>
+        <li className="nav-link" onClick={() => setContent("about")}>
           About
         </li>
-        <li className="nav-link" onClick={() => setContent("Contact")}>
+        <li className="nav-link" onClick={() => setContent("contact")}>
           Contact
         </li>
       </ul>
