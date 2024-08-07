@@ -10,6 +10,16 @@ li {
   cursor: pointer;
 }
 
+h2 {
+  color: #fff;
+}
+
+button {
+  font-size: 24px;
+  padding: 4px 8px;
+  margin-right: 10px;
+}
+
 nav {
   display: flex;
   justify-content: space-between;
@@ -18,7 +28,8 @@ nav {
 }
 
 nav h1 {
-  padding: 4px 18px;
+  color: #fff;
+  padding: 14px 18px 10px;
 }
 
 nav ul {
@@ -34,10 +45,14 @@ nav ul li:hover {
   color: #fff;
 }
 
+.active {
+  color: #fff;
+}
+
 .comment-section {
   margin: 12px 18px;
 }
 
-.home {
+.content {
   margin: 12px 18px;
 }
