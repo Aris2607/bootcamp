@@ -1,0 +1,3 @@
+# GET https://api.unsplash.com/photos/random/?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo
+
+GET https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&page=1&query=office

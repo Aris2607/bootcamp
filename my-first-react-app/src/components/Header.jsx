@@ -31,6 +31,12 @@ class Header extends Component {
           >
             Contact
           </li>
+          <li
+            className={this.props.content === "unsplash" ? "active" : ""}
+            onClick={() => this.props.setContent("unsplash")}
+          >
+            Photos
+          </li>
         </ul>
       </nav>
     );

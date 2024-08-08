@@ -7,6 +7,9 @@ import Home from "./components/Home";
 import Batch from "./components/Batch";
 import About from "./components/About";
 import Contact from "./components/Contact";
+import InputForm from "./components/InputForm";
+import axios from "axios";
+import UnsplashSearch from "./components/UnsplashSearch";
 
 const person = {
   name: "Mochamad Aris",
@@ -52,13 +55,7 @@ const commentsData = [
 ];
 
 const UserComments = commentsData.map((user) => (
-  <Comments
-    key={user.id}
-    name={user.name}
-    imgURL={user.imgURL}
-    content={user.content}
-    time={user.time}
-  />
+  <Comments key={user.id} user={user} />
 ));
 
 class App extends Component {
@@ -77,23 +74,26 @@ class App extends Component {
     const Content = () => {
       switch (this.state.content) {
         case "home":
-          return <Home name={person.name} batch={person.batch} />;
+          return <Home person={person} />;
         case "batch":
           return <Batch />;
         case "about":
           return <About />;
         case "contact":
           return <Contact />;
+        case "unsplash":
+          return <UnsplashSearch />;
         default:
           return <Home name={person.name} batch={person.batch} />;
       }
     };
     return (
-      <>
+      <div className="container">
         <Header content={this.state.content} setContent={this.setContent} />
         <Content />
         <CommentSection UserComments={UserComments} />
-      </>
+        <UnsplashSearch />
+      </div>
     );
   }
 }

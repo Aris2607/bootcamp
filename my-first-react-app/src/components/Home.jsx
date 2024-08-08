@@ -16,8 +16,8 @@ class Home extends Component {
     return (
       <div className="content">
         <h1>
-          Hi, nama saya {this.props.name}, Saya dari bootcamp batch
-          {this.props.batch}
+          Hi, nama saya {this.props.person.name}, Saya dari bootcamp batch{" "}
+          {this.props.person.batch}
         </h1>
         <p>
           You Clicked {this.state.count} {this.state.count > 0 ? "times" : ""}

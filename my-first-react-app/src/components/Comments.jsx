@@ -6,14 +6,14 @@ class Comments extends Component {
       <div className="ui comments">
         <div className="comment">
           <a className="avatar">
-            <img src={this.props.imgURL} alt={this.props.name} />
+            <img src={this.props.user.imgURL} alt={this.props.user.name} />
           </a>
           <div className="content">
-            <a className="author">{this.props.name}</a>
+            <a className="author">{this.props.user.name}</a>
             <div class="metadata">
-              <span class="date">{this.props.time}</span>
+              <span class="date">{this.props.user.time}</span>
             </div>
-            <div className="text">{this.props.content}</div>
+            <div className="text">{this.props.user.content}</div>
             <div className="actions">
               <a className="reply">Reply</a>
             </div>
@@ -24,15 +24,17 @@ class Comments extends Component {
   }
 }
 
-export const CommentSection = ({ UserComments }) => {
-  return (
-    <div className="comment-section">
-      <div className="ui comments">
-        <h3 className="ui dividing header">Comments</h3>
-        {UserComments}
+export class CommentSection extends Component {
+  render() {
+    return (
+      <div className="comment-section">
+        <div className="ui comments">
+          <h3 className="ui dividing header">Comments</h3>
+          {this.props.UserComments}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  }
+}
 
 export default Comments;
