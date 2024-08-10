@@ -1,4 +1,10 @@
 import { Component } from "react";
+import { commentsData } from "../data/CommentsData";
+import Comments, { CommentSection } from "./Comments";
+
+const UserComments = commentsData.map((user) => (
+  <Comments key={user.id} user={user} />
+));
 
 class Home extends Component {
   constructor(props) {
@@ -28,6 +34,7 @@ class Home extends Component {
         <button onClick={() => this.handleClick(this.state.count + 1)}>
           (+)
         </button>
+        <CommentSection UserComments={UserComments} />
       </div>
     );
   }

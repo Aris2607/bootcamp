@@ -12,6 +12,8 @@ li {
 
 h2 {
   color: #fff;
+  margin: 0;
+  padding: 10px 0;
 }
 
 button {
@@ -59,4 +61,31 @@ nav ul li:hover {
 
 .container {
   height: 200vh;
+  width: 100%;
+}
+
+/* Gaya untuk elemen pembungkus galeri */
+.gallery {
+  column-count: 3; /* Mengatur jumlah kolom */
+  column-gap: 16px; /* Jarak antar kolom */
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Gaya untuk setiap elemen card */
+.card {
+  margin-bottom: 16px; /* Jarak antara card yang vertikal */
+  break-inside: avoid; /* Mencegah card terpotong di kolom */
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+/* Gaya untuk gambar */
+.card img {
+  width: 100%;
+  display: block;
+  object-fit: cover; /* Mengisi seluruh elemen card tanpa distorsi */
+  border-radius: 8px;
 }

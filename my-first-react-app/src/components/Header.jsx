@@ -32,8 +32,8 @@ class Header extends Component {
             Contact
           </li>
           <li
-            className={this.props.content === "unsplash" ? "active" : ""}
-            onClick={() => this.props.setContent("unsplash")}
+            className={this.props.content === "gallery" ? "active" : ""}
+            onClick={() => this.props.setContent("gallery")}
           >
             Photos
           </li>
