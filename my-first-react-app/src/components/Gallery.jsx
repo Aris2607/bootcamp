@@ -14,7 +14,7 @@ export default class Gallery extends Component {
   fetchData = async () => {
     try {
       const response = await axios.get(
-        "https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&query=train"
+        "https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&query=train&per_page=30"
       );
       this.setState({ result: response.data.results });
     } catch (err) {
@@ -25,7 +25,7 @@ export default class Gallery extends Component {
   searchData = async () => {
     try {
       const response = await axios.get(
-        `https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&query=${this.state.search}`
+        `https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&query=${this.state.search}&per_page=30`
       );
       this.setState({ result: response.data.results });
     } catch (err) {
@@ -35,6 +35,8 @@ export default class Gallery extends Component {
 
   componentDidMount = async () => {
     await this.fetchData();
+    console.log(this.refsCollection);
+    console.log(this.state.result);
   };
 
   handleSearch = (e) => {
@@ -42,7 +44,7 @@ export default class Gallery extends Component {
       if (this.state.search.length > 0) {
         this.searchData();
       } else {
-        this.fetchData(); // Reset to default results if search is cleared
+        this.fetchData();
       }
     });
   };

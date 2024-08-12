@@ -37,6 +37,12 @@ class Header extends Component {
           >
             Photos
           </li>
+          <li
+            className={this.props.content === "video" ? "active" : ""}
+            onClick={() => this.props.setContent("video")}
+          >
+            Videos
+          </li>
         </ul>
       </nav>
     );

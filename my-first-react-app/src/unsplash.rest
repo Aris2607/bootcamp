@@ -1,3 +1,10 @@
 # GET https://api.unsplash.com/photos/random/?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo
 
-GET https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&page=1&query=office
+# GET https://api.unsplash.com/search/collections?client_id=ZQsYLNMLCNtH8L9310aMCP0o9AgO19myW5KD-NBTqKo&page=1&query=office
+
+# GET https://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyDus6bhAjrnkuf-Zc4jyuLSUv8esccabs8&part=snippet,contentDetails,statistics,status
+
+# GET  https://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyDus6bhAjrnkuf-Zc4jyuLSUv8esccabs8&part=snippet,statistics&fields=items(id,snippet,statistics)
+
+GET https://www.googleapis.com/youtube/v3/videos?key=AIzaSyDus6bhAjrnkuf-Zc4jyuLSUv8esccabs8
+

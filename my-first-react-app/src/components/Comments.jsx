@@ -10,8 +10,8 @@ class Comments extends Component {
           </a>
           <div className="content">
             <a className="author">{this.props.user.name}</a>
-            <div class="metadata">
-              <span class="date">{this.props.user.time}</span>
+            <div className="metadata">
+              <span className="date">{this.props.user.time}</span>
             </div>
             <div className="text">{this.props.user.content}</div>
             <div className="actions">
@@ -29,7 +29,7 @@ export class CommentSection extends Component {
     return (
       <div className="comment-section">
         <div className="ui comments">
-          <h3 className="ui dividing header">Comments</h3>
+          <h3 className="ui dividing header">Comments ({this.props.total})</h3>
           {this.props.UserComments}
         </div>
       </div>

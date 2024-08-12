@@ -6,6 +6,8 @@ import Batch from "./components/Batch";
 import About from "./components/About";
 import Contact from "./components/Contact";
 import Gallery from "./components/Gallery";
+import VideoGallery from "./components/VideoGallery";
+import TestVideo from "./components/TestVideo";
 
 const person = {
   name: "Mochamad Aris",
@@ -36,6 +38,8 @@ class App extends Component {
           return <Contact />;
         case "gallery":
           return <Gallery />;
+        case "video":
+          return <VideoGallery />;
         default:
           return <Home name={person.name} batch={person.batch} />;
       }
@@ -44,9 +48,6 @@ class App extends Component {
       <div className="container">
         <Header content={this.state.content} setContent={this.setContent} />
         <Content />
-        {/* <CommentSection UserComments={UserComments} /> */}
-        {/* <UnsplashSearch /> */}
-        {/* <Gallery /> */}
       </div>
     );
   }

@@ -34,7 +34,10 @@ class Home extends Component {
         <button onClick={() => this.handleClick(this.state.count + 1)}>
           (+)
         </button>
-        <CommentSection UserComments={UserComments} />
+        <CommentSection
+          total={commentsData.length}
+          UserComments={UserComments}
+        />
       </div>
     );
   }
