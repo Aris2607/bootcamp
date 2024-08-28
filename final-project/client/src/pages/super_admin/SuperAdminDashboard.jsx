@@ -1,10 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
+import Form from "../../components/Form";
+import SuperAdminNav from "../../components/navbars/SuperAdminNav";
 
 export default function SuperAdminDashboard() {
   return (
     <div>
-      <h1>Super Admin Dashboard</h1>
+      <SuperAdminNav />
+      <Form />
     </div>
   );
 }

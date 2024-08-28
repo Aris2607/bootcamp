@@ -26,7 +26,6 @@ api.interceptors.response.use(
     if (error.response) {
       if (error.response.status === 401) {
         console.error("Unauthorized! Redirecting to login...");
-        window.location.href = "/login";
       }
       if (error.response.status === 500) {
         console.error("Internal Server Error");
@@ -62,7 +61,7 @@ const createData = async (endpoint, data) => {
     return response.data;
   } catch (err) {
     console.error("Error while creating data:", err);
-    throw err.response || err;
+    throw err.response ? err.response.data : err; // Pastikan error yang dilempar memiliki data
   }
 };
 

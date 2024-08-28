@@ -7,6 +7,8 @@ import Dashboard from "../pages/user/Dashboard";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import { useSelector } from "react-redux";
+import ForgotPassword from "../pages/ForgotPassword";
+import EmployeeList from "../pages/admin/EmployeeList";
 
 const AppRoutes = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -25,6 +27,7 @@ const AppRoutes = () => {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/super-admin" element={<Navigate to="/admin" />} />
             <Route path="/dashboard" element={<Navigate to="/admin" />} />
+            <Route path="/employees-list" element={<EmployeeList />} />
           </>
         );
       case 3:
@@ -58,6 +61,7 @@ const AppRoutes = () => {
         path="/login"
         element={isAuthenticated ? <Navigate to="/" /> : <Login />}
       />
+      <Route path="/forgot" element={<ForgotPassword />} />
       <Route element={<PrivateRoute />}>{roleBasedRoutes()}</Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

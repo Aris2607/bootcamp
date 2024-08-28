@@ -1,6 +1,5 @@
 // controllers/authController.js
-
-const { Users } = require("../models");
+const { Users, Employees, Roles } = require("../models");
 const bcrypt = require("bcrypt");
 const { generateAuthToken } = require("../utils/auth");
 require("dotenv").config();
@@ -8,7 +7,19 @@ require("dotenv").config();
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = await Users.findOne({ where: { username } });
+    const user = await Users.findOne({
+      where: { username },
+      include: [
+        {
+          model: Employees,
+          attributes: ["first_name", "last_name", "email"],
+        },
+        {
+          model: Roles,
+          attributes: ["role_name"],
+        },
+      ],
+    });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
