@@ -1,8 +1,12 @@
 const { google } = require("googleapis");
+require("dotenv").config();
+
+const GOOGLE_OAUTH_CLIENT_ID = process.env.GOOGLE_OAUTH_CLIENT_ID;
+const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
 
 const oauth2Client = new google.auth.OAuth2(
-  "892857843036-9olv2oa0p35m8omo7hqku0chdvtriu6d.apps.googleusercontent.com",
-  "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",
+  GOOGLE_OAUTH_CLIENT_ID,
+  GOOGLE_OAUTH_CLIENT_SECRET,
   "http://localhost" // e.g., http://localhost
 );
 
