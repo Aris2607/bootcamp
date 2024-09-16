@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import profile from "../../assets/profile.png";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../store/slices/authThunk";
 
@@ -10,37 +10,66 @@ export default function AdminNav() {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [employeeDropdownOpen, setEmployeeDropdownOpen] = useState(false);
   const dispatch = useDispatch();
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
   };
 
+  const toggleEmployeeDropdown = () => {
+    setEmployeeDropdownOpen(!employeeDropdownOpen);
+  };
+
   const handleSignOut = async () => {
     try {
-      await dispatch(logoutUser()).unwrap();
+      await dispatch(logoutUser(user.username)).unwrap();
       console.log("Logout...");
-      //   navigate("/login"); // Redirect ke halaman login setelah logout
-      //   <Navigate to={"/login"}></Navigate>;
-      window.location.reload();
+      navigate("/login"); // Redirect ke halaman login setelah logout
     } catch (err) {
-      // Tangani error jika diperlukan
       console.error(err);
     }
   };
 
   return (
-    <header className="flex justify-between items-center bg-lime-500 p-4 rounded-b-lg shadow">
+    <header className="fixed left-0 top-0 right-0 flex justify-between items-center bg-teal-400 p-4 rounded-b-lg shadow">
       <div className="flex items-center space-x-4">
         <div className="text-xl font-semibold text-white">ADMIN DASHBOARD</div>
-        <div
-          onClick={() => navigate("/employees-list")}
-          className="text-xl font-semibold text-white hover:cursor-pointer hover:text-lime-200"
-        >
-          EMPLOYEES LIST
+
+        {/* Dropdown for Employee */}
+        <div className="relative">
+          <div
+            onClick={toggleEmployeeDropdown}
+            className="text-xl font-semibold text-white hover:cursor-pointer hover:text-lime-200"
+          >
+            EMPLOYEE
+          </div>
+          {employeeDropdownOpen && (
+            <div
+              className="absolute bg-white shadow-md mt-2 rounded-md w-48"
+              onMouseLeave={() => setEmployeeDropdownOpen(false)}
+            >
+              <div
+                onClick={() => navigate("/employees-list")}
+                className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+              >
+                Employee List
+              </div>
+              <div
+                onClick={() => navigate("/employee-management")}
+                className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+              >
+                Employee Management
+              </div>
+            </div>
+          )}
         </div>
-        <div className="text-xl font-semibold text-white">LEAVES</div>
+
+        <Link to={"/leave"} className="text-xl font-semibold text-white">
+          LEAVES
+        </Link>
       </div>
+
       <div className="flex items-center space-x-4">
         <div className="text-white">
           {new Date()

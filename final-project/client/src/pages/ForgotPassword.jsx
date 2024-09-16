@@ -3,14 +3,17 @@ import { createData } from "../services/Api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await createData("/reset", { email });
+      console.log(email);
+      const response = await createData("/request-password-reset", { email });
       console.log(response);
     } catch (err) {
       console.error(err);
+      setError(err.message);
     }
   };
 
@@ -65,6 +68,7 @@ export default function ForgotPassword() {
                 </p>
               </div>
             </div>
+            {error && <p className="text-red-500">{error}</p>}
 
             <button
               type="submit"

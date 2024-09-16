@@ -1,33 +1,14 @@
 const { Notifications } = require("../models");
 
-const createNotif = async (req, res) => {
+// Get notifications for an employee
+exports.getNotifications = async (req, res) => {
   try {
-    const notif = await Notifications.create(req.body);
-    res.status(201).json(notif);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Unable to create notification" });
-  }
-};
-
-const getNotif = async (req, res) => {
-  try {
-    const notif = await Notifications.findAll({
-      where: {
-        id: req.params.id,
-      },
+    const { employeeId } = req.params;
+    const notifications = await Notifications.findAll({
+      where: { employee_id: employeeId },
     });
-    if (!notif) {
-      return res.status(404).json("There's no Notification yet");
-    }
-    res.status(200).json(notif);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Unable to get notification" });
+    res.status(200).json(notifications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-};
-
-module.exports = {
-  createNotif,
-  getNotif,
 };

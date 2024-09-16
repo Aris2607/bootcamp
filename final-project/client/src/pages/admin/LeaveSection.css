@@ -1,0 +1,55 @@
+/* App.css */
+.dashboard {
+  display: flex;
+}
+
+.dashboard-header {
+  background-color: #f0f4f8;
+  padding: 1rem;
+}
+
+.dashboard-header nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.dashboard-header nav ul li {
+  cursor: pointer;
+}
+
+.max-w-7xl {
+  max-width: 1200px;
+}
+
+.flex {
+  display: flex;
+}
+
+.space-x-6 {
+  gap: 1.5rem;
+}
+
+.w-2/3 {
+  width: 66.666%;
+}
+
+.w-1/3 {
+  width: 33.333%;
+}
+
+.bg-white {
+  background-color: white;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}

@@ -1,47 +1,119 @@
 const express = require("express");
-const { sequelize } = require("./models"); // Assuming your sequelize instance is exported from models/index.js
+const { sequelize } = require("./models");
 const cors = require("cors");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const employeeRouter = require("./routes/employeeRoutes");
-const attandanceRouter = require("./routes/attandanceRoutes");
+const attendanceRouter = require("./routes/attandanceRoutes");
 const userRouter = require("./routes/userRoutes");
 const authRouter = require("./routes/authRoutes");
-const errorHandler = require("./middleware/errorHandler");
-const helmet = require("helmet");
-// server.js atau app.js
+const leaveRouter = require("./routes/leaveRoutes");
+const errorHandler = require("./middlewares/errorHandler");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware and routes setup
+// const options = {
+//   key: fs.readFileSync(path.join(__dirname, "ssl/localhost+2-key.pem")),
+//   cert: fs.readFileSync(path.join(__dirname, "ssl/localhost+2.pem")),
+// };
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Middleware setup
 app.use(express.json());
-app.use(cors());
-app.use((req, res, next) => {
-  console.log("Middleware - Request Body:", req.body);
-  next();
-});
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
-app.use(helmet());
-
-app.post("/test", (req, res) => {
-  console.log("Test Route Body:", req.body);
-  res.json({ data: req.body });
-});
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// API routes
 app.use("/api", employeeRouter);
-app.use("/api", attandanceRouter);
+app.use("/api", attendanceRouter);
 app.use("/api", userRouter);
 app.use("/api", authRouter);
+app.use("/api", leaveRouter);
 
+// Error handling middleware
 app.use(errorHandler);
 
-// Sync the database
+// Socket.IO setup for real-time chat
+io.on("connection", (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  socket.on("joinDivision", (divisionId) => {
+    socket.join(`division-${divisionId}`);
+    console.log(`User ${socket.id} joined division ${divisionId}`);
+  });
+
+  socket.on("sendMessage", async (data) => {
+    const { message, userId, divisionId } = data;
+    try {
+      console.log("Message received:", message);
+      const chat = await sequelize.models.Chats.create({
+        message,
+        user_id: userId,
+        division_id: divisionId,
+      });
+
+      const user = await sequelize.models.Users.findByPk(userId, {
+        include: [
+          {
+            model: sequelize.models.Employees,
+            attributes: ["profile_picture"],
+          },
+        ],
+      });
+
+      io.to(`division-${divisionId}`).emit("receiveMessage", {
+        ...chat.toJSON(),
+        user: {
+          username: user.username,
+          profile_picture: user.Employee.profile_picture,
+        },
+      });
+    } catch (error) {
+      console.error("Error saving chat to database:", error);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
+});
+
+// Sync the database and start the server
 sequelize
-  .sync({ force: false }) // Set `force: true` to drop tables before recreating them, but use with caution
+  .sync({ force: false })
   .then(() => {
     console.log("Database synchronized");
-    // Start the server after the database is synced
-    app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`Server is running on https://localhost:${PORT}`);
     });
   })
   .catch((error) => {

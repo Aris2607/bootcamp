@@ -1,10 +1,13 @@
 // store/slices/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 import { loginUser } from "./authThunk";
+import Cookies from "js-cookie";
 
 const initialState = {
   user: JSON.parse(localStorage.getItem("user")) || null, // Ambil data user dari localStorage
-  isAuthenticated: !!localStorage.getItem("token"),
+  // isAuthenticated: !!localStorage.getItem("token"),
+  isAuthenticated: !!Cookies.get("token"),
+  token: Cookies.get("token") || "",
   loading: false,
   error: null,
 };
@@ -17,11 +20,19 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       localStorage.removeItem("token");
-      localStorage.removeItem("user"); // Hapus data user dari localStorage
     },
     loginFailure: (state, action) => {
       state.error = action.payload;
       state.loading = false;
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+    setIsAuthenticated: (state, action) => {
+      state.isAuthenticated = action.payload;
+    },
+    setToken: (state, action) => {
+      state.token = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -43,6 +54,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, loginFailure } = authSlice.actions;
+export const { logout, loginFailure, setUser, setIsAuthenticated, setToken } =
+  authSlice.actions;
 
 export default authSlice.reducer;

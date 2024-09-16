@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "hiragana1",
+    "database": "attandance_system",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "hiragana1",
+    "database": "attandance_system",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "hiragana1",
+    "database": "attandance_system",
+    "host": "localhost",
+    "dialect": "postgres"
+  }
+}

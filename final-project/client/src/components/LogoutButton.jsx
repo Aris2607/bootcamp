@@ -14,7 +14,7 @@ const LogoutButton = () => {
       console.log("Logout...");
       //   navigate("/login"); // Redirect ke halaman login setelah logout
       //   <Navigate to={"/login"}></Navigate>;
-      window.location.reload();
+      // window.location.reload();
     } catch (err) {
       // Tangani error jika diperlukan
       console.error(err);

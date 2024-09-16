@@ -1,22 +1,31 @@
 "use strict";
 const { Model } = require("sequelize");
-// const { FOREIGNKEYS } = require("sequelize/lib/query-types");
+
 module.exports = (sequelize, DataTypes) => {
   class Positions extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
       Positions.hasMany(models.Employees, { foreignKey: "position_id" });
+      Positions.belongsTo(models.Departments, { foreignKey: "department_id" });
+      Positions.belongsTo(models.Divisions, { foreignKey: "division_id" });
     }
   }
   Positions.init(
     {
       name: DataTypes.STRING(30),
-      level: DataTypes.STRING(15),
+      department_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "Departments",
+          key: "id",
+        },
+      },
+      division_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "Divisions",
+          key: "id",
+        },
+      },
     },
     {
       sequelize,

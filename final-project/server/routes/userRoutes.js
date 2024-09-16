@@ -7,10 +7,18 @@ const {
   deleteUser,
   createRole,
   forgotPassword,
+  sendCreatePasswordUser,
+  createPassword,
+  getChats,
+  getUserByDivision,
 } = require("../controllers/userController");
-const { login, logout } = require("../controllers/authController");
-const authMiddleware = require("../middleware/authMiddleware");
-const authorizeRole = require("../middleware/authorizeRole");
+const {
+  login,
+  logout,
+  requestPasswordReset,
+  resetPassword,
+} = require("../controllers/authController");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -19,7 +27,13 @@ router.post("/login", login);
 // Rute untuk logout
 router.post("/logout", authMiddleware, logout);
 
-router.post("/reset", forgotPassword);
+router.post("/request-password-reset", requestPasswordReset);
+
+router.post("/reset-password", resetPassword);
+
+router.post("/send-create-password", sendCreatePasswordUser);
+
+router.post("/create-password", createPassword);
 
 // Rute yang memerlukan autentikasi
 router.get("/protected", authMiddleware, (req, res) => {
@@ -34,6 +48,7 @@ router.post(
   // authorizeRole(["super_admin", "admin"]),
   createUser
 );
+router.post("/user/division/get", getUserByDivision);
 router.put(
   "/user/:id",
   // authMiddleware,
@@ -48,5 +63,7 @@ router.delete(
 );
 
 router.post("/role", createRole);
+
+router.post("/chat/all", getChats);
 
 module.exports = router;

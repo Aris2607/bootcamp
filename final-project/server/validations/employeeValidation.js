@@ -3,10 +3,13 @@ const { check } = require("express-validator");
 const validateEmployeeCreation = [
   check("first_name").notEmpty().withMessage("First name is required"),
   check("last_name").notEmpty().withMessage("Last name is required"),
-  check("positionId")
+  check("phone_number")
+    .isMobilePhone("id-ID")
+    .withMessage("Mobile Phone not Valid"),
+  check("position_id")
     .isInt({ min: 1 })
     .withMessage("Valid positionId is required"),
-  check("departmentId")
+  check("department_id")
     .isInt({ min: 1 })
     .withMessage("Valid departmentId is required"),
 ];
@@ -20,11 +23,11 @@ const validateEmployeeUpdate = [
     .optional()
     .notEmpty()
     .withMessage("Last name cannot be empty"),
-  check("positionId")
+  check("position_id")
     .optional()
     .isInt({ min: 1 })
     .withMessage("Valid positionId is required"),
-  check("departmentId")
+  check("department_id")
     .optional()
     .isInt({ min: 1 })
     .withMessage("Valid departmentId is required"),

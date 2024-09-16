@@ -1,8 +1,21 @@
-const { Employees, Positions, Departments, Sequelize } = require("../models");
+const {
+  Employees,
+  Positions,
+  Departments,
+  Divisions,
+  Sequelize,
+} = require("../models");
 const { validationResult } = require("express-validator");
 
 const create = async (req, res) => {
   const errors = validationResult(req);
+
+  const existsEmployee = await Employees.findOne({
+    where: { email: req.body.email },
+  });
+  if (existsEmployee) {
+    return res.status(400).json({ errors: "Email is already in use" });
+  }
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
@@ -28,6 +41,7 @@ const getAll = async (req, res) => {
           attributes: ["name"],
         },
       ],
+      order: [["updatedAt", "DESC"]],
     });
     res.status(200).json(employees);
   } catch (err) {
@@ -48,6 +62,10 @@ const getById = async (req, res) => {
           model: Departments,
           attributes: ["name"],
         },
+        {
+          model: Divisions,
+          attributes: ["id"],
+        },
       ],
     });
     if (!employee) {
@@ -57,6 +75,38 @@ const getById = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Unable to fetch employee" });
+  }
+};
+
+const getEmployee = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit of 10
+  const offset = (page - 1) * limit;
+
+  try {
+    const employees = await Employees.findAndCountAll({
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        {
+          model: Positions,
+          attributes: ["name"],
+        },
+        {
+          model: Departments,
+          attributes: ["name"],
+        },
+      ],
+      order: [["updatedAt", "DESC"]],
+    });
+
+    res.json({
+      data: employees.rows,
+      total: employees.count,
+      page: parseInt(page),
+      totalPages: Math.ceil(employees.count / limit),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -97,6 +147,53 @@ const getByName = async (req, res) => {
   }
 };
 
+const searchEmployee = async (req, res) => {
+  const { keyword } = req.body;
+  const { page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
+
+  try {
+    const employees = await Employees.findAndCountAll({
+      where: {
+        [Sequelize.Op.or]: [
+          { first_name: { [Sequelize.Op.like]: `%${keyword}%` } },
+          { last_name: { [Sequelize.Op.like]: `%${keyword}%` } },
+          { email: { [Sequelize.Op.like]: `%${keyword}%` } },
+          { phone_number: { [Sequelize.Op.like]: `%${keyword}%` } },
+          // Assuming `position` is a field in `Employees`, but you might need to adjust this
+        ],
+      },
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [
+        {
+          model: Positions,
+          attributes: ["name"],
+        },
+        {
+          model: Departments,
+          attributes: ["name"],
+        },
+      ],
+      order: [["updatedAt", "DESC"]],
+    });
+
+    if (employees.rows.length === 0) {
+      return res.status(404).json({ message: "Employee Not Found!" });
+    }
+
+    res.status(200).json({
+      data: employees.rows,
+      total: employees.count,
+      page: parseInt(page),
+      totalPages: Math.ceil(employees.count / limit),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to search employee" });
+  }
+};
+
 const updateEmployee = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -132,8 +229,10 @@ const deleteEmployee = async (req, res) => {
 module.exports = {
   create,
   getAll,
+  getEmployee,
   getById,
   getByName,
   updateEmployee,
   deleteEmployee,
+  searchEmployee,
 };

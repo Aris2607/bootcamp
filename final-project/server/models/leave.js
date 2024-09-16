@@ -1,18 +1,13 @@
 "use strict";
 const { Model } = require("sequelize");
-// const { FOREIGNKEYS } = require("sequelize/lib/query-types");
+
 module.exports = (sequelize, DataTypes) => {
   class Leaves extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
       Leaves.belongsTo(models.Employees, { foreignKey: "employee_id" });
     }
   }
+
   Leaves.init(
     {
       employee_id: {
@@ -22,16 +17,50 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      leave_type: DataTypes.STRING(15),
-      start_date: DataTypes.DATEONLY,
-      end_date: DataTypes.DATEONLY,
-      reason: DataTypes.TEXT,
-      status: DataTypes.STRING(20),
+      start_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      end_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      leave_type: {
+        type: DataTypes.ENUM("Annual", "Sick", "Unpaid"),
+        allowNull: false,
+      },
+      total_days: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          min: 1,
+        },
+      },
+      status: {
+        type: DataTypes.ENUM("Pending", "Approved", "Rejected"),
+        allowNull: false,
+        defaultValue: "Pending",
+      },
+      reason: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       sequelize,
       modelName: "Leaves",
       freezeTableName: true,
+      timestamps: false,
     }
   );
 

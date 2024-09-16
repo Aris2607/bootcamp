@@ -12,6 +12,9 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Users.belongsTo(models.Employees, { foreignKey: "employee_id" });
       Users.belongsTo(models.Roles, { foreignKey: "role_id" });
+      Users.hasMany(models.Chats, {
+        foreignKey: "user_id",
+      });
     }
   }
   Users.init(
@@ -32,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      status: DataTypes.STRING(10),
     },
     {
       sequelize,

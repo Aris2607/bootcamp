@@ -2,8 +2,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001/api", // Ganti dengan URL backend Anda
-  timeout: 10000,
+  baseURL: import.meta.env.VITE_BASEURL, // Ganti dengan URL backend Anda
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -55,9 +55,9 @@ const getDataByField = async (endpoint, params) => {
   }
 };
 
-const createData = async (endpoint, data) => {
+const createData = async (endpoint, data, options = {}) => {
   try {
-    const response = await api.post(endpoint, data);
+    const response = await api.post(endpoint, data, options);
     return response.data;
   } catch (err) {
     console.error("Error while creating data:", err);

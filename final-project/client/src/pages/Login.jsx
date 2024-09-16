@@ -1,8 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../store/slices/authThunk";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 import { loginFailure } from "../store/slices/authSlice";
+import axios from "axios";
 // import "./Login.css";
 
 const Login = () => {
@@ -15,6 +18,37 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [errors, setError] = useState(null);
 
+  console.log("IsAuth:", isAuthenticated);
+
+  console.log("TRUTHY:", !!Cookies.get("token"));
+
+  const handleSubmit2 = async (e) => {
+    e.preventDefault();
+
+    try {
+      axios
+        .post("https://slick-rivers-prove.loca.lt/api/login", {
+          username,
+          password,
+        })
+        .then((response) => {
+          console.log("Response:", response.data);
+        })
+        .catch((error) => {
+          console.error("Error:", error.message);
+          if (error.response) {
+            console.error("Response data:", error.response.data);
+            console.error("Response status:", error.response.status);
+          } else if (error.request) {
+            console.error("Request data:", error.request);
+          } else {
+            console.error("Error message:", error.message);
+          }
+        });
+    } catch (err) {
+      console.log(err);
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Form submitted");
@@ -110,7 +144,7 @@ const Login = () => {
                 </label>
                 <a
                   className="inline-flex items-center  gap-x-1 text-sm text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500"
-                  href="/forgot"
+                  href="/reset"
                 >
                   Forgot password?
                 </a>
