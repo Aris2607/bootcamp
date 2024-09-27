@@ -1,7 +1,14 @@
-const { Leaves, Employees, Notifications, Positions } = require("../models");
+const {
+  Leaves,
+  Employees,
+  Notifications,
+  Positions,
+  ErrorLogs,
+} = require("../models");
+const logError = require("../utils/logError");
 
 // Apply for leave
-exports.applyLeave = async (req, res) => {
+const applyLeave = async (req, res) => {
   try {
     const { id } = req.params;
     const { start_date, end_date, leave_type, total_days, reason } = req.body;
@@ -15,14 +22,31 @@ exports.applyLeave = async (req, res) => {
       total_days,
       reason,
     });
+
+    const employee = await Employees.findByPk(id);
+
+    await Notifications.create({
+      employee_id: 1,
+      message: `${employee.first_name} ${employee.last_name} has requested for leave: ${leave.reason}.`,
+    });
+
     res.status(201).json(leave);
   } catch (error) {
     res.status(500).json({ error: error.message });
+    ErrorLogs.create({
+      error_message: "Cannot request for leave",
+      stack_trace: "Unknown Trace",
+      user_id: req.params.id,
+      controller: "Apply Leave",
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    logError(error, "Apply Leave");
   }
 };
 
 // Approve or reject leave
-exports.approveLeave = async (req, res) => {
+const approveLeave = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -49,7 +73,7 @@ exports.approveLeave = async (req, res) => {
   }
 };
 
-exports.getLeave = async (req, res) => {
+const getLeave = async (req, res) => {
   try {
     const leaves = await Leaves.findAll({
       include: [
@@ -74,4 +98,64 @@ exports.getLeave = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Unable to fetch employee's leaves" });
   }
+};
+
+const leaveCheck = async (req, res) => {
+  const { employeeId } = req.params;
+
+  try {
+    const leave = await Leaves.findOne({
+      where: {
+        employee_id: employeeId,
+        status: "Pending",
+      },
+    });
+
+    console.log("LEAVE USER:", leave);
+
+    if (!leave) {
+      return res.status(200).json({ canLeave: true });
+    } else {
+      return res.status(200).json({ canLeave: false });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Unable to check leave status", error });
+  }
+};
+
+const getTotalLeave = async (req, res) => {
+  const { employeeId } = req.params;
+
+  console.log("EMPLOYEE ID:", employeeId);
+
+  try {
+    const leave = await Leaves.findAll({
+      where: {
+        employee_id: employeeId,
+        status: "Approved",
+      },
+      order: [["created_at", "DESC"]],
+      limit: 1,
+    });
+
+    console.log("LEAVES:", leave);
+
+    if (leave.length === 0) {
+      return res.status(404).json({ message: "There's no leave yet" });
+    }
+
+    res.status(200).json(leave);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Unable to get total days of leave", error });
+  }
+};
+
+module.exports = {
+  applyLeave,
+  approveLeave,
+  getLeave,
+  leaveCheck,
+  getTotalLeave,
 };

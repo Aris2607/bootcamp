@@ -94,8 +94,8 @@ const ChatArea = () => {
   };
 
   return (
-    <div className="w-[360px] sm-375:w-[375px] sm-376:w-full sm-425:w-full sm-360:w-[360px] sm:w-full border-2 md:text-base lg:text-lg border-red-400 md:w-full h-[100%] md:min-h-screen relative bg-gray-700 text-white px-4 flex flex-col">
-      <div className="border-2 border-teal-400 mt-8 flex-1 w-full md:w-full overflow-y-auto">
+    <div className="w-[360px] sm-375:w-[375px] sm-376:w-full sm-425:w-full sm-360:w-[360px] sm:w-full md:text-base lg:text-lg md:w-full h-[100%] md:min-h-screen relative bg-gray-700 text-white px-4 flex flex-col">
+      <div className="mt-8 flex-1 w-full md:w-full overflow-y-auto">
         <div className="grid gap-2">
           {loading ? (
             // Skeleton Design saat loading
@@ -143,7 +143,7 @@ const ChatArea = () => {
                           : "text-green-500"
                       }
                     >
-                      {msg.username}
+                      {msg.username}{" "}
                     </strong>
                   ) : null}
                   <div className="flex flex-wrap">{msg.message}</div>

@@ -6,27 +6,31 @@ Chart.register(ArcElement);
 
 // Plugin to display text in the center of the doughnut chart
 const centerTextPlugin = (totalEmployees) => {
-  console.log("Total employees:", totalEmployees);
-
   return {
     id: "centerText",
     beforeDraw: (chart) => {
       const { width, height, ctx } = chart;
       ctx.restore();
       const fontSize = (height / 114).toFixed(2);
-      ctx.font = `${fontSize}em sans-serif`;
       ctx.textBaseline = "middle";
+
+      // Determine text color based on theme
+      const textColor =
+        localStorage.getItem("theme") === "dark" ? "white" : "black";
 
       // Ensure totalEmployees is not null or undefined
       const text1 = totalEmployees ? `${totalEmployees}` : "0"; // Fallback to "0" if null/undefined
+      ctx.fillStyle = textColor; // Set the color for the totalEmployees text
+      ctx.font = `${fontSize}em sans-serif`;
       const textX = Math.round((width - ctx.measureText(text1).width) / 2);
       const textY = height / 2 - 10; // Adjust `-10` for vertical spacing
 
       ctx.fillText(text1, textX, textY);
 
-      // Text for the label "Total Employees"
+      // Text for the label "Employees"
       const text2 = "Employees";
       ctx.font = `${(fontSize / 1.5).toFixed(2)}em sans-serif`; // Smaller font for the label
+      ctx.fillStyle = textColor; // Set the color for the label text
       const textX2 = Math.round((width - ctx.measureText(text2).width) / 2);
       ctx.fillText(text2, textX2, textY + 20); // Adjust `+20` for vertical spacing
 
@@ -56,8 +60,6 @@ const AttendanceChart = ({ absent, present, notFilled, totalEmployees }) => {
       },
     },
   };
-
-  console.log("Employees:", totalEmployees); // Check if totalEmployees is correctly passed
 
   return (
     <div className="w-full max-w-xs mx-auto">

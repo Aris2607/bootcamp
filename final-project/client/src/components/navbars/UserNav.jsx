@@ -4,6 +4,8 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../store/slices/authThunk";
+import logo from "../../assets/ars-logo.png";
+import { createData } from "../../services/Api";
 
 const UserNav = () => {
   const { user } = useSelector((state) => state.auth);
@@ -11,8 +13,17 @@ const UserNav = () => {
 
   const handleSignOut = async () => {
     try {
-      await dispatch(logoutUser(user.username)).unwrap();
+      // await dispatch(logoutUser(user.username)).unwrap();
+      const response = await createData(
+        "/logout",
+        {},
+        { withCredentials: true }
+      );
+      console.log(response);
       console.log("Logout...");
+      localStorage.setItem("showLogoutSuccess", "true");
+
+      window.location = "/login";
       // navigate("/login"); // Redirect ke halaman login setelah logout
     } catch (err) {
       console.error(err);
@@ -20,11 +31,11 @@ const UserNav = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 flex justify-between items-center p-4 bg-main text-white z-50 shadow-md">
+    <nav className="fixed top-0 left-0 right-0 flex justify-between items-center px-4 py-2 bg-main text-white z-50 shadow-md">
       <div className="flex items-center space-x-4 justify-between w-1/2">
-        <span className="font-bold text-lg">Logo</span>
+        <img src={logo} alt="Logo" className="w-16" />
         <div className="flex">
-          <a href="#" className="hover:text-gray-300 text-mainText">
+          <a href="/" className="hover:text-gray-300 text-mainText">
             <img
               src={ColumnIcon}
               alt="column icon"
@@ -65,12 +76,12 @@ const UserNav = () => {
             className="dropdown-content menu bg-slate-400 text-white rounded-box z-[1] w-52 p-2 shadow"
           >
             <li>
-              <a>Item 1</a>
+              <a>Account Settings</a>
             </li>
             <li>
               <button
                 onClick={handleSignOut}
-                className="block w-full px-4 py-2 text-left text-sm text-gray-700"
+                className="block w-full px-4 py-2 text-left text-sm text-white"
                 role="menuitem"
                 tabIndex="-1"
                 id="menu-item-3"

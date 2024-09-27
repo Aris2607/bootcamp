@@ -1,0 +1,27 @@
+const { Departments, Positions } = require("../models");
+
+// Mengambil semua departments
+const getDepartments = async (req, res) => {
+  try {
+    const departments = await Departments.findAll();
+    res.json(departments);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Mengambil positions berdasarkan department_id
+const getPositionsByDepartment = async (req, res) => {
+  const { department_id } = req.query;
+
+  try {
+    const positions = await Positions.findAll({
+      where: { department_id },
+    });
+    res.json(positions);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { getDepartments, getPositionsByDepartment };

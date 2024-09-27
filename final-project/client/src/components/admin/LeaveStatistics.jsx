@@ -43,7 +43,7 @@ const LeaveStatistics = ({ rejectedLeaves, pendingLeaves, approvedLeaves }) => {
 
   return (
     <div className="max-w-xs mx-auto mt-2 flex justify-end">
-      <div className="relative w-1/2]">
+      <div className="relative w-[1/2]">
         {/* Use Pie component instead of Doughnut */}
         <Pie data={data} options={options} />
       </div>

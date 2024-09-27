@@ -17,6 +17,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       role_name: DataTypes.STRING(15),
       description: DataTypes.TEXT,
+      permit: {
+        type: DataTypes.JSONB,
+      },
     },
     {
       sequelize,

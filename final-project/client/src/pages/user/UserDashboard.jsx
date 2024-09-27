@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from "react";
 import UserSidebar from "../../components/sidebars/UserSidebar";
 import { useSelector } from "react-redux";
@@ -13,7 +14,7 @@ export default function UserDashboard() {
     <div>
       {/* <UserSidebar /> */}
       <div className="max-w-full flex">
-        <div className="bg-white p-4 w-[50%] rounded shadow mx-auto">
+        <div className="bg-white dark:bg-slate-900 p-4 w-[50%] rounded shadow mx-auto">
           <AttendanceForm employeeId={user.employee_id} />
           <LogoutButton />
         </div>

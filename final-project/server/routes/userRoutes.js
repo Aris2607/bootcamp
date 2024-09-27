@@ -5,12 +5,12 @@ const {
   getUsers,
   updateUser,
   deleteUser,
-  createRole,
   forgotPassword,
   sendCreatePasswordUser,
   createPassword,
   getChats,
   getUserByDivision,
+  changePassword,
 } = require("../controllers/userController");
 const {
   login,
@@ -19,21 +19,40 @@ const {
   resetPassword,
 } = require("../controllers/authController");
 const authMiddleware = require("../middlewares/authMiddleware");
+const {
+  createRole,
+  getRolesAndPermit,
+  getAllRolesAndPermit,
+  updatePermit,
+} = require("../controllers/roleController");
+const { getNotifications } = require("../controllers/notificationController");
 
 const router = express.Router();
 
 router.post("/login", login);
 
 // Rute untuk logout
-router.post("/logout", authMiddleware, logout);
+router.post("/logout", logout);
 
 router.post("/request-password-reset", requestPasswordReset);
 
 router.post("/reset-password", resetPassword);
 
+router.post("/change-password/:id", changePassword);
+
 router.post("/send-create-password", sendCreatePasswordUser);
 
 router.post("/create-password", createPassword);
+
+router.get("/roles/get/all", getAllRolesAndPermit);
+
+router.get("/roles/get", getRolesAndPermit);
+
+router.post("/roles/update-permit/:roleId", updatePermit);
+
+router.post("/roles/create", createRole);
+
+router.get("/user/notification/:employeeId", getNotifications);
 
 // Rute yang memerlukan autentikasi
 router.get("/protected", authMiddleware, (req, res) => {
@@ -62,7 +81,7 @@ router.delete(
   deleteUser
 );
 
-router.post("/role", createRole);
+// router.post("/role", createRole);
 
 router.post("/chat/all", getChats);
 

@@ -13,8 +13,8 @@ const Clock = () => {
 
   return (
     <div>
-      <p className="text-white text-3xl">Time</p>
-      <h2 className="clock text-2xl">
+      <p className="text-slate-900 text-3xl dark:text-white">Time</p>
+      <h2 className="clock text-2xl tetxt-slate-900 dark:text-white">
         {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </h2>
     </div>

@@ -1,7 +1,5 @@
 const { Users, Employees, Roles, Chats } = require("../models");
 const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
-const { google } = require("googleapis");
 const sgMail = require("@sendgrid/mail");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -193,15 +191,80 @@ const createRole = async (req, res) => {
 //   }
 // };
 
+const changePassword = async (req, res) => {
+  const { id } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  sgMail.setApiKey(process.env.SENDGRID_APIKEY);
+
+  try {
+    const user = await Users.findByPk(id, {
+      include: {
+        model: Employees,
+        attributes: ["email", "first_name", "last_name"],
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ message: "InvalidCredentials" });
+    }
+
+    const email = user.Employee.email;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    const msg = {
+      to: email, // Email tujuan adalah email dari tabel Employees
+      from: "ars.hsrps@gmail.com", // Email pengirim
+      subject: "Password Changed Successfully",
+      html: `
+    <h2>Dear ${user.Employee.first_name} ${user.Employee.last_name},</h2>
+
+<p>We wanted to let you know that your password has been successfully changed. If you did not make this change, please contact support immediately.</p>
+
+<p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+
+<p>Thank you for using our service!</p>
+
+<p>Best regards,</p>
+    <p><strong>ARS Office Team</strong></p>
+  `,
+    };
+
+    await sgMail.send(msg);
+
+    res.status(200).json({ message: "Password change successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Unable to change password" });
+  }
+};
+
 const forgotPassword = async (req, res) => {
   sgMail.setApiKey(process.env.SENDGRID_APIKEY);
 
+  const resetLink = `https://bhf9dmsr-5173.asse.devtunnels.ms/reset-password?token=${token}`;
+
   const msg = {
-    to: req.body.email,
-    from: "ars.hsrps@gmail.com", // Use the email address or domain you verified above
-    subject: "Sending with Twilio SendGrid is Fun",
-    text: "and easy to do anywhere, even with Node.js",
-    html: "<strong>and easy to do anywhere, even with Node.js</strong>",
+    to: email, // Email tujuan adalah email dari tabel Employees
+    from: "ars.hsrps@gmail.com", // Email pengirim
+    subject: "Reset Your ARS Office Attendance Account Password",
+    html: `
+    <p>Dear ${firstName},</p>
+    <p>We received a request to reset the password for your ARS Office Attendance account.</p>
+    <p>If you requested this, please click the link below to reset your password:</p>
+    <p><a href="${resetLink}" style="color: #007bff; text-decoration: none;">Reset Your Password</a></p>
+    <p>If you did not request a password reset, please ignore this email or contact our support team for assistance.</p>
+    <p>For your security, the link will expire in 30 minutes.</p>
+    <p>Best regards,</p>
+    <p><strong>ARS Office Team</strong></p>
+  `,
   };
 
   try {
@@ -223,6 +286,10 @@ const sendCreatePasswordUser = async (req, res) => {
     // Cari employee berdasarkan email
     const user = await Users.findOne({
       where: { username },
+      include: {
+        model: Employees,
+        attributes: ["first_name", "last_name"],
+      },
     });
 
     console.log("Email:", email);
@@ -242,18 +309,24 @@ const sendCreatePasswordUser = async (req, res) => {
     });
 
     // URL untuk halaman reset password
-    const sendLink = `http://10.10.101.187:5173/create-password?token=${token}`;
+    const sendLink = `https://bhf9dmsr-5173.asse.devtunnels.ms/create-password?token=${token}`;
 
     // Kirim email ke pengguna dengan tautan reset password menggunakan SendGrid
     const msg = {
       to: email, // Email tujuan adalah email dari tabel Employees
       from: "ars.hsrps@gmail.com", // Email pengirim
-      subject: "Create User Password Account",
+      subject:
+        "Welcome to ARS Office Attendance - Create Your Account Password",
       html: `
-        <p>You has registered for ARS Attendance. Click the link below to create your password:</p>
-        <p>Your Username is: ${username}</p>
-        <a href="${sendLink}">${sendLink}</a>
-      `,
+    <p>Dear ${user.Employee.first_name} ${user.Employee.last_name},</p>
+    <p>Welcome to ARS Office Attendance! You have been successfully registered in our system.</p>
+    <p>To complete your registration, please create your account password by clicking the link below:</p>
+    <p><strong>Username:</strong> ${username}</p>
+    <p><a href="${sendLink}" style="color: #007bff; text-decoration: none;">Create Your Password</a></p>
+    <p>If you did not request this, please ignore this email or contact our support team immediately.</p>
+    <p>Best regards,</p>
+    <p><strong>ARS Office Team</strong></p>
+  `,
     };
 
     await sgMail.send(msg);
@@ -347,4 +420,5 @@ module.exports = {
   createPassword,
   getChats,
   getUserByDivision,
+  changePassword,
 };

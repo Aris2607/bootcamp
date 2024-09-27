@@ -9,6 +9,7 @@ export const checkInUser = createAsyncThunk(
       const date = new Date().toLocaleDateString("id-ID").replace(/\//g, "-");
       const formattedDate = format(new Date(), "yyyy-MM-dd");
       console.log("Date:", date);
+      console.log("Formatted Date:", formattedDate);
       const time_in = new Date()
         .toLocaleTimeString("id-ID")
         .replace(/\./g, ":");

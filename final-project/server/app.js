@@ -21,14 +21,19 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // const options = {
-//   key: fs.readFileSync(path.join(__dirname, "ssl/localhost+2-key.pem")),
-//   cert: fs.readFileSync(path.join(__dirname, "ssl/localhost+2.pem")),
+//   key: fs.readFileSync(path.join(__dirname, "ssl/192.168.1.8-key.pem")),
+//   cert: fs.readFileSync(path.join(__dirname, "ssl/192.168.1.8.pem")),
 // };
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    origin: [
+      "https://10.10.101.209:5173",
+      "https://localhost:5173",
+      "https://192.168.1.8:5173",
+      "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -40,9 +45,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    origin: [
+      "https://10.10.101.209:5173",
+      "https://localhost:5173",
+      "https://192.168.1.8:5173",
+      "https://bhf9dmsr-5173.asse.devtunnels.ms",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 app.use(
@@ -50,6 +61,11 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // API routes

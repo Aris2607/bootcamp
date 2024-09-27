@@ -1,12 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { createData } from "../../services/Api";
+import { createData, getData } from "../../services/Api";
 import {
   loginFailure,
   setToken,
   setUser,
   setIsAuthenticated,
 } from "./authSlice";
-import Cookies from "js-cookie";
+import axios from "axios";
 
 export const loginUser = createAsyncThunk(
   "auth/login",
@@ -18,6 +18,8 @@ export const loginUser = createAsyncThunk(
       // localStorage.setItem("token", response.token);
       dispatch(setUser(JSON.stringify(response.user)));
       dispatch(setToken(response.token));
+      // Set login success flag in localStorage
+      localStorage.setItem("showLoginSuccessToast", "true");
       console.log(response);
       return response.user;
     } catch (error) {
@@ -29,13 +31,15 @@ export const loginUser = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk(
   "auth/logout",
-  async (username, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      // await createData("/logout", { username });
+      const response = await axios.post(
+        "https://bhf9dmsr-3001.asse.devtunnels.ms/api/logout"
+      );
+      console.log(response);
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       thunkAPI.dispatch(setToken(null));
-      Cookies.remove("token");
       thunkAPI.dispatch(setIsAuthenticated(false));
       return true;
     } catch (err) {

@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import "./index.css";
+import "animate.css";
 import store, { persistor } from "./store/store.js";
 import { BrowserRouter } from "react-router-dom";
 

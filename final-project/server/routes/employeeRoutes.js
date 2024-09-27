@@ -8,6 +8,8 @@ const {
   getByName,
   getEmployee,
   searchEmployee,
+  createEmployeeSchedule,
+  createEmployeeBatch,
 } = require("../controllers/employeeController");
 const {
   validateEmployeeCreation,
@@ -15,15 +17,27 @@ const {
 } = require("../validations/employeeValidation");
 const authMiddleware = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/multerConfig"); // Import konfigurasi multer
-const { uploadFile } = require("../controllers/uploadController"); // Import controller
+const fileUpload = require("../middlewares/multerFileConfig.js");
+const {
+  uploadFile,
+  uploadFileExcel,
+} = require("../controllers/uploadController"); // Import controller
+const { getDepartments } = require("../controllers/departmentController");
+const {
+  getPositionsByDepartment,
+} = require("../controllers/departmentController");
 
 const router = express.Router();
 //wallpapercave.com/w/wp8281609
 // Definisikan route untuk upload
-https: router.post("/upload", upload.single("profile_picture"), uploadFile);
+router.post("/upload", upload.single("profile_picture"), uploadFile);
 
-router.post("/employee/search", searchEmployee);
-router.get("/employee", getEmployee);
+router.post("/upload/file", fileUpload.single("file"), uploadFileExcel);
+
+router.post("/employees/batch", validateEmployeeCreation, createEmployeeBatch);
+
+router.post("/employee/:role_id/search", searchEmployee);
+router.get("/employees/:role_id", getEmployee);
 router.get("/employees", getAll);
 router.get("/employee/:id", getById);
 router.post(
@@ -33,10 +47,13 @@ router.post(
     next();
   },
   // authMiddleware,
-  validateEmployeeCreation,
+  // validateEmployeeCreation,
   create
 );
-router.put("/employee/:id", validateEmployeeUpdate, updateEmployee);
+router.get("/departments", getDepartments);
+router.get("/positions", getPositionsByDepartment);
+router.post("/employee/schedule", createEmployeeSchedule);
+router.put("/employee/:id/edit", validateEmployeeUpdate, updateEmployee);
 router.delete("/employee/:id", deleteEmployee);
 
 module.exports = router;

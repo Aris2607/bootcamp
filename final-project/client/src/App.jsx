@@ -1,10 +1,15 @@
 // src/App.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import AppRoutes from "./routes/AppRoutes";
 
 const App = () => {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.className = savedTheme;
+  }, []);
+
   return (
-    <div>
+    <div className="dark:bg-gray-800">
       <AppRoutes />
     </div>
   );

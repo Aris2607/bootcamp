@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import DatePicker from "react-multi-date-picker";
-import { createData } from "../../services/Api";
+import { createData, getData } from "../../services/Api";
 import { useSelector } from "react-redux";
 import UserNav from "../../components/navbars/UserNav";
+import AdminNav from "../../components/navbars/AdminNav";
+import "./leavePage.css";
+import { showToastAlertWithCustomAnimation } from "../../utils/alert";
 
 const EmployeeLeavePage = () => {
   const [selectedDates, setSelectedDates] = useState([]);
@@ -61,7 +64,7 @@ const EmployeeLeavePage = () => {
       setSelectedDates(allDatesInRange);
       setError("");
     } else {
-      setError("Pilih hanya dua tanggal untuk menentukan rentang.");
+      setError("Select only two dates to specify the range.");
     }
   };
 
@@ -73,43 +76,63 @@ const EmployeeLeavePage = () => {
     }
 
     setIsLoading(true); // Set loading saat pengajuan
+    try {
+      const check = await getData(`/employee/${user.employee_id}/check`);
 
-    const response = await createData(
-      `/employee/${user.employee_id}/leave/request`,
-      {
-        start_date: selectedDates[0],
-        end_date: selectedDates[selectedDates.length - 1],
-        total_days: selectedDates.length,
-        reason,
-        leave_type: leaveType,
+      console.log(check);
+
+      if (check.canLeave) {
+        const response = await createData(
+          `/employee/${user.employee_id}/leave/request`,
+          {
+            start_date: selectedDates[0],
+            end_date: selectedDates[selectedDates.length - 1],
+            total_days: selectedDates.length,
+            reason,
+            leave_type: leaveType,
+          }
+        );
+        console.log(response);
+        setSelectedDates([]);
+        setLeaveType("");
+        setReason("");
+        setError("");
+        setIsLoading(false); // Set loading selesai
+        showToastAlertWithCustomAnimation(
+          "Leave reaquest has been delivered",
+          "success"
+        );
+      } else {
+        setIsLoading(false);
+        showToastAlertWithCustomAnimation(
+          "You are already have leave request",
+          "info"
+        );
       }
-    );
-
-    console.log(response);
-
-    setSelectedDates([]);
-    setLeaveType("");
-    setReason("");
-    setError("");
-    setIsLoading(false); // Set loading selesai
+    } catch (error) {
+      setIsLoading(false);
+      showToastAlertWithCustomAnimation("Reason is too long", "error");
+    }
   };
 
   return (
     <>
-      <UserNav />
-      <div className="p-8 mt-14">
-        <h1 className="text-4xl font-bold mb-6 text-center">
+      <AdminNav title={""} />
+      <div className="min-h-screen p-1 pt-20 dark:bg-slate-900">
+        <h1 className="text-4xl font-bold mb-6 text-center dark:text-white">
           Employee Leave Management
         </h1>
 
-        <div className="card bg-base-100 shadow-xl p-6 mb-10">
-          <h2 className="text-2xl font-semibold mb-6">Ajukan Cuti</h2>
+        <div className="card bg-base-100 shadow-xl p-6 mb-10 dark:bg-slate-500 w-[1200px] h-[500px] mx-auto">
+          <h2 className="text-2xl font-semibold mb-6 dark:text-white">
+            Request For Leave
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Pilih Tanggal Cuti */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Tanggal Cuti</span>
+                <span className="label-text dark:text-white">Leave Date</span>
               </label>
               <DatePicker
                 value={selectedDates}
@@ -117,8 +140,17 @@ const EmployeeLeavePage = () => {
                 multiple
                 minDate={today}
                 format="YYYY-MM-DD"
-                className="input input-bordered w-full"
-                placeholder="Pilih tanggal secara berurutan"
+                style={{ backgroundColor: "white" }}
+                className="input bg-white input-bordered w-full dark:text-white"
+                placeholder="Select Date"
+                dayStyle={(date) => {
+                  const day = date.getDay();
+                  // Highlight Saturdays and Sundays
+                  if (day === 0 || day === 6) {
+                    return { backgroundColor: "red", color: "white" }; // Red background for weekends
+                  }
+                  return {};
+                }}
               />
               {error && <p className="text-red-500 mt-2">{error}</p>}
             </div>
@@ -126,16 +158,16 @@ const EmployeeLeavePage = () => {
             {/* Pilih Jenis Cuti */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Jenis Cuti</span>
+                <span className="label-text dark:text-white">Jenis Cuti</span>
               </label>
               <select
                 value={leaveType}
                 onChange={(e) => setLeaveType(e.target.value)}
-                className="select select-bordered w-full"
+                className="select select-bordered w-full dark:text-white dark:bg-slate-600"
               >
-                <option value="">Pilih jenis cuti</option>
-                <option value="Sick">Sakit</option>
-                <option value="Annual">Cuti Tahunan</option>
+                <option value="">Select leave type</option>
+                <option value="Sick">Sick</option>
+                <option value="Annual">Annual Leave</option>
               </select>
             </div>
           </div>
@@ -143,12 +175,12 @@ const EmployeeLeavePage = () => {
           {/* Alasan Cuti */}
           <div className="form-control mt-6">
             <label className="label">
-              <span className="label-text">Alasan</span>
+              <span className="label-text dark:text-white">Reason</span>
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="textarea textarea-bordered w-full"
+              className="textarea textarea-bordered w-full dark:bg-slate-600 dark:text-white"
               rows="4"
               placeholder="Berikan alasan cuti"
             />
@@ -157,19 +189,19 @@ const EmployeeLeavePage = () => {
           {/* Tombol Ajukan Cuti */}
           <button
             onClick={handleApplyLeave}
-            className="btn btn-primary btn-block mt-6"
+            className="btn btn-primary btn-block mt-6 dark:bg-blue-800 dark:text-white"
             disabled={selectedDates.length === 0 || isLoading}
           >
             {isLoading ? (
-              <span className="loading loading-spinner loading-sm"></span>
+              <span className="loading loading-spinner loading-sm dark:text-white"></span>
             ) : (
-              "Ajukan Cuti"
+              "Apply"
             )}
           </button>
         </div>
 
         {/* Tabel Tanggal yang Dipilih */}
-        <h2 className="text-3xl font-semibold mb-4">
+        {/* <h2 className="text-3xl font-semibold mb-4">
           Tanggal Cuti yang Dipilih
         </h2>
         <div className="overflow-x-auto">
@@ -219,7 +251,7 @@ const EmployeeLeavePage = () => {
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
       </div>
     </>
   );

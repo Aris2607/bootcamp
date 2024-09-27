@@ -19,15 +19,21 @@ const pullOutPlugin = {
 // Registrasi komponen Chart.js (tanpa plugin)
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const PieChart = () => {
+const isDark = localStorage.getItem("theme") === "dark";
+
+const PieChart = ({ absent = 0, present = 1 }) => {
   const data = {
-    labels: ["Not Attend", "Attend"],
+    labels: ["Absent", "Present"],
     datasets: [
       {
         label: "# of Days",
-        data: [4, 26],
-        backgroundColor: ["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 1)"],
-        borderColor: ["rgba(255, 255, 255, 1)", "rgba(255, 255, 255, 1)"],
+        data: [absent, present],
+        backgroundColor: isDark
+          ? ["rgba(220,20,60,.9)", "rgba(0,100,0,.9)"]
+          : ["rgba(255,31,31, .9)", "rgba(87,255,65, .9)"],
+        borderColor: isDark
+          ? ["rgba(220,20,60,.9)", "rgba(0,100,0,.9)"]
+          : ["rgba(255,31,31, .9)", "rgba(87,255,65, .9)"],
         borderWidth: 2,
       },
     ],
@@ -57,8 +63,7 @@ const PieChart = () => {
 
   return (
     <div className="w-60 h-60">
-      <Pie data={data} options={options} plugins={[pullOutPlugin]} />{" "}
-      {/* Tambahkan plugin di sini */}
+      <Pie data={data} options={options} /> {/* Tambahkan plugin di sini */}
     </div>
   );
 };

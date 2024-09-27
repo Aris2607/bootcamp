@@ -67,62 +67,90 @@ export default function AttendanceStatus() {
   );
 
   return (
-    <div className="bg-white ml-3 p-6 rounded-lg shadow">
-      <h2 className="text-lg font-semibold text-gray-700 mb-4">
-        TODAY&apos;S ATTENDANCE STATUS
-      </h2>
-      <div className="flex items-center justify-center">
-        <div className="relative w-40 h-40">
-          <AttendanceChart
-            absent={
-              attendances
+    <>
+      {attendances === null || employees === null ? (
+        <div className="bg-white ml-3 p-6 rounded-lg shadow dark:bg-gray-600 dark:text-white">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            TODAY&apos;S ATTENDANCE STATUS
+          </h2>
+          <div className="flex items-center justify-center">
+            {/* Skeleton for chart */}
+            <div className="relative w-40 h-40 bg-gray-200 rounded-full animate-pulse"></div>
+          </div>
+          <div className="mt-4 flex justify-around">
+            {/* Skeleton for the attendance text placeholders */}
+            <div className="text-gray-700">
+              <div className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="text-gray-700">
+              <div className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="text-gray-700">
+              <div className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white ml-3 p-6 rounded-lg shadow dark:bg-gray-600 ">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4 dark:text-white">
+            TODAY&apos;S ATTENDANCE STATUS
+          </h2>
+          <div className="flex items-center justify-center">
+            <div className="relative w-40 h-40 dark:text-white">
+              <AttendanceChart
+                absent={
+                  attendances
+                    ? attendances.filter(
+                        (attendance) => attendance.status == "Absent"
+                      ).length
+                    : "0"
+                }
+                present={
+                  attendances
+                    ? attendances.filter(
+                        (attendance) =>
+                          attendance.status == "On Time" ||
+                          attendance.status == "Late"
+                      ).length
+                    : "0"
+                }
+                notFilled={
+                  attendances && employees
+                    ? employees.length - attendances.length
+                    : "0"
+                }
+                totalEmployees={employees && employees.length}
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-around">
+            <div className="text-gray-700 dark:text-white">
+              Absent:{" "}
+              {attendances
                 ? attendances.filter(
                     (attendance) => attendance.status == "Absent"
                   ).length
-                : "0"
-            }
-            present={
-              attendances
+                : "0"}
+            </div>
+            <div className="text-gray-700 dark:text-white">
+              Present:{" "}
+              {attendances
                 ? attendances.filter(
                     (attendance) =>
-                      attendance.status == "On Time" ||
-                      attendance.status == "Late"
+                      attendance.status == "Late" ||
+                      attendance.status == "On Time"
                   ).length
-                : "0"
-            }
-            notFilled={
-              attendances && employees
+                : "0"}
+            </div>
+            <div className="text-gray-700 dark:text-white">
+              Not Filled Attendance Yet:{" "}
+              {attendances && employees
                 ? employees.length - attendances.length
-                : "0"
-            }
-            totalEmployees={employees && employees.length}
-          />
+                : "0"}
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="mt-4 flex justify-around">
-        <div className="text-gray-700">
-          Absent:{" "}
-          {attendances
-            ? attendances.filter((attendance) => attendance.status == "Absent")
-                .length
-            : "0"}
-        </div>
-        <div className="text-gray-700">
-          Present:{" "}
-          {attendances
-            ? attendances.filter(
-                (attendance) =>
-                  attendance.status == "Late" || attendance.status == "On Time"
-              ).length
-            : "0"}
-        </div>
-        <div className="text-gray-700">
-          Not Filled Attendance Yet:{" "}
-          {attendances && employees
-            ? employees.length - attendances.length
-            : "0"}
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }

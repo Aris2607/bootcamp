@@ -1,5 +1,13 @@
 const { Op, Sequelize } = require("sequelize");
-const { Attendances, Schedules, Employees } = require("../models");
+const {
+  Attendances,
+  Schedules,
+  Employees,
+  Positions,
+  sequelize,
+} = require("../models");
+const cron = require("node-cron");
+const logError = require("../utils/logError");
 
 // Record attendance for an employee
 const recordAttendance = async (req, res) => {
@@ -76,6 +84,7 @@ const recordAttendance = async (req, res) => {
     });
     res.status(201).json(attendance);
   } catch (error) {
+    logError(error, "Record Attendance", req.params.id);
     res.status(500).json({ error: error });
   }
 };
@@ -110,6 +119,7 @@ const recordTimeout = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Unable to Time-Out" });
+    logError(error, "Record Timeout", req.params.id);
   }
 };
 
@@ -174,11 +184,12 @@ const attendanceStatus = async (req, res) => {
     }
 
     res.status(200).json({ checkIn: true, checkOut: true });
-  } catch (err) {
-    console.error("Error fetching attendance:", err);
+  } catch (error) {
+    console.error("Error fetching attendance:", error);
     res
       .status(500)
       .json({ message: "An error occurred while fetching attendance." });
+    logError(error, "Attendance Status", req.params.id);
   }
 };
 
@@ -210,6 +221,7 @@ const getAttendanceRecords = async (req, res) => {
     res.status(200).json(attendanceRecords);
   } catch (error) {
     res.status(500).json({ message: error.message }); // Mengembalikan pesan error jika terjadi kesalahan
+    logError(error, "Get Attendance Record", req.params.id);
   }
 };
 
@@ -234,8 +246,312 @@ const getAttendanceRecordsDaily = async (req, res) => {
     res.status(200).json(attendance);
   } catch (error) {
     res.status(500).json({ message: "Unable to fetch attendance" });
+    logError(error, "Record Attendance", req.params.id);
   }
 };
+
+const getDailyRecap = async (req, res) => {
+  const { date } = req.body;
+
+  // Convert the input date into the desired format
+  const startDate = new Date(date);
+  const startISODate = startDate.toISOString().split("T")[0]; // 'YYYY-MM-DD' format
+
+  // Create end date by adding 1 day
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 1);
+  const endISODate = endDate.toISOString().split("T")[0]; // 'YYYY-MM-DD' format for the next day
+
+  console.log("Date::", date);
+  console.log("Start Date::", startISODate);
+  console.log("End Date::", endISODate);
+
+  try {
+    const data = await Attendances.findAll({
+      where: {
+        date: {
+          [Op.between]: [startISODate, endISODate], // Query between the start and end date
+        },
+      },
+      include: [
+        {
+          model: Employees,
+          attributes: ["first_name", "last_name"],
+          include: {
+            model: Positions,
+            attributes: ["name"],
+          },
+        },
+      ],
+    });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to get daily recap", error });
+    logError(error, "Get Daily Recap");
+  }
+};
+
+const getWeeklyRecap = async (req, res) => {
+  const { date } = req.body;
+
+  const startDate = new Date(date);
+  // Get the first day of the week (Sunday)
+  const firstDayOfWeek = new Date(startDate);
+  firstDayOfWeek.setDate(startDate.getDate() - startDate.getDay());
+  const startISODate = firstDayOfWeek.toISOString().split("T")[0];
+
+  // Get the last day of the week (Saturday)
+  const lastDayOfWeek = new Date(firstDayOfWeek);
+  lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+  const endISODate = lastDayOfWeek.toISOString().split("T")[0];
+
+  console.log("Start Date of Week::", startISODate);
+  console.log("End Date of Week::", endISODate);
+
+  try {
+    const data = await Attendances.findAll({
+      where: {
+        date: {
+          [Op.between]: [startISODate, endISODate],
+        },
+      },
+      include: [
+        {
+          model: Employees,
+          attributes: ["first_name", "last_name"],
+          include: {
+            model: Positions,
+            attributes: ["name"],
+          },
+        },
+      ],
+    });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to get weekly recap", error });
+    logError(error, "Get Weekly Recap");
+  }
+};
+
+const getMonthlyRecap = async (req, res) => {
+  const { date } = req.body;
+
+  const startDate = new Date(date);
+  // Get the first day of the month
+  const firstDayOfMonth = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    1
+  );
+  const startISODate = firstDayOfMonth.toISOString().split("T")[0];
+
+  // Get the last day of the month
+  const lastDayOfMonth = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth() + 1,
+    0
+  );
+  const endISODate = lastDayOfMonth.toISOString().split("T")[0];
+
+  console.log("Start Date of Month::", startISODate);
+  console.log("End Date of Month::", endISODate);
+
+  try {
+    const data = await Attendances.findAll({
+      where: {
+        date: {
+          [Op.between]: [startISODate, endISODate],
+        },
+      },
+      include: [
+        {
+          model: Employees,
+          attributes: ["first_name", "last_name"],
+          include: {
+            model: Positions,
+            attribute: ["name"],
+          },
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const attendanceData = data.map((attendance) => {
+      const workHours =
+        attendance.time_in && attendance.time_out
+          ? calculateWorkHours(attendance.time_in, attendance.time_out)
+          : 0;
+
+      return {
+        date: attendance.date,
+        time_in: attendance.time_in,
+        time_out: attendance.time_out,
+        status: attendance.status,
+        total_hours: workHours, // Add total work hours
+      };
+    });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Unable to get monthly recap", error });
+    logError(error, "Get Monthly Recap");
+  }
+};
+
+const getAttendanceSummary = async (req, res) => {
+  const { id, year } = req.params;
+
+  const attendances = await Attendances.findAll({
+    where: {
+      date: {
+        [Op.between]: [`${year}-01-01`, `${year}-12-31`],
+      },
+    },
+    attributes: [
+      "status",
+      [Sequelize.fn("COUNT", Sequelize.col("status")), "count"],
+    ],
+    group: ["status"],
+  });
+
+  res.status(200).json(attendances);
+};
+
+const getWeeklyAttendanceRecap = async (req, res) => {
+  const { month } = req.params; // e.g., '2024-09'
+
+  try {
+    const employeesWithAttendance = await Employees.findAll({
+      include: [
+        {
+          model: Attendances,
+          where: sequelize.where(
+            sequelize.fn("TO_CHAR", sequelize.col("date"), "YYYY-MM"),
+            "=",
+            month
+          ),
+          required: false, // Allows employees without attendances to still be included
+        },
+      ],
+    });
+
+    res.json(employeesWithAttendance);
+  } catch (error) {
+    console.error("Failed to fetch attendance data:", error);
+    res.status(500).json({ error: "Failed to fetch attendance" });
+    logError(error, "Get Weekly Attendance Recap");
+  }
+};
+
+const getMonthlyAttendanceRecap = async (req, res) => {
+  const { id, year } = req.params;
+
+  try {
+    const attendances = await Attendances.findAll({
+      where: {
+        date: {
+          [Op.between]: [`${year}-01-01`, `${year}-12-31`], // Membatasi pada tahun tertentu
+        },
+      },
+      attributes: [
+        [Sequelize.literal('EXTRACT(MONTH FROM "date")'), "month"], // Ambil bulan dari kolom date menggunakan PostgreSQL
+        [Sequelize.fn("COUNT", Sequelize.col("id")), "attendance_count"], // Hitung jumlah attendance
+      ],
+      group: [Sequelize.literal('EXTRACT(MONTH FROM "date")')], // Kelompokkan berdasarkan bulan
+      order: [Sequelize.literal('EXTRACT(MONTH FROM "date") ASC')], // Urutkan berdasarkan bulan
+    });
+
+    res.status(200).json(attendances);
+  } catch (error) {
+    res.status(500).json({ message: "Unable to get monthly recap" });
+    logError(error, "Get Monthly Attendance Recap", req.params.id);
+  }
+};
+
+const calculateWorkHours = (timeIn, timeOut) => {
+  const start = new Date(`1970-01-01T${timeIn}Z`);
+  const end = new Date(`1970-01-01T${timeOut}Z`);
+  const diff = (end - start) / (1000 * 60 * 60); // difference in hours
+  return diff > 0 ? diff : 0; // Ensure non-negative values
+};
+
+const getEmployeeAttendance = async (req, res) => {
+  try {
+    const { employee_id, year, month } = req.params;
+
+    // Retrieve attendance records for the given employee and year-month
+    const startDate = new Date(`${year}-${month}-01`);
+    const endDate = new Date(year, month, 0); // Last date of the month
+
+    const attendances = await Attendances.findAll({
+      where: {
+        employee_id,
+        date: {
+          [Op.between]: [startDate, endDate],
+        },
+      },
+      include: [{ model: Employees, attributes: ["first_name", "last_name"] }],
+    });
+
+    // Calculate total work hours for each attendance
+    const attendanceData = attendances.map((attendance) => {
+      const workHours =
+        attendance.time_in && attendance.time_out
+          ? calculateWorkHours(attendance.time_in, attendance.time_out)
+          : 0;
+
+      return {
+        date: attendance.date,
+        time_in: attendance.time_in,
+        time_out: attendance.time_out,
+        status: attendance.status,
+        total_hours: workHours, // Add total work hours
+      };
+    });
+
+    res.json({ data: attendanceData });
+  } catch (error) {
+    console.error("Error fetching attendance history:", error);
+    res.status(500).json({ message: "Error fetching attendance history" });
+  }
+};
+
+const checkAttendance = async () => {
+  const now = new Date();
+  const currentDate = now.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+  // Cari semua karyawan
+  const employees = await Employees.findAll();
+
+  // Periksa kehadiran untuk setiap karyawan
+  for (const employee of employees) {
+    const attendance = await Attendances.findOne({
+      where: {
+        employee_id: employee.id,
+        date: currentDate,
+      },
+    });
+
+    // Jika tidak ada record untuk tanggal tersebut, buatkan record dengan status "Absent"
+    if (!attendance) {
+      await Attendances.create({
+        employee_id: employee.id,
+        date: currentDate,
+        time_in: null,
+        time_out: null,
+        status: "Absent",
+        location: null, // atau data lokasi default jika diperlukan
+      });
+    }
+  }
+};
+
+// Jadwalkan pengecekan setiap hari pukul 17:00
 
 // const monthlyRecap = async (req, res) => {
 //   try {
@@ -266,11 +582,20 @@ const calculateDistance = (coord1, coord2) => {
   return distance;
 };
 
+cron.schedule("54 21 * * *", checkAttendance);
+
 module.exports = {
   recordAttendance,
   recordTimeout,
   // locationDistance,
   attendanceStatus,
   getAttendanceRecords,
+  getDailyRecap,
   getAttendanceRecordsDaily,
+  getAttendanceSummary,
+  getWeeklyAttendanceRecap,
+  getEmployeeAttendance,
+  getMonthlyAttendanceRecap,
+  getWeeklyRecap,
+  getMonthlyRecap,
 };

@@ -5,6 +5,7 @@ import { combineReducers } from "redux";
 import * as encrypt from "redux-persist-transform-encrypt"; // Namespace import
 import authReducer from "./slices/authSlice"; // Contoh slice Anda
 import attendanceReducer from "./slices/attendanceSlice";
+import permitReducer from "./slices/permitSlice";
 
 const encryptor = encrypt.encryptTransform({
   // Gunakan 'encryptTransform' dari namespace 'encrypt'
@@ -23,6 +24,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   attendance: attendanceReducer,
+  permit: permitReducer,
   // tambahkan reducer lain di sini
 });
 

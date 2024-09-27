@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       date: DataTypes.DATEONLY,
       time_in: DataTypes.TIME,
       time_out: DataTypes.TIME,
-      status: DataTypes.ENUM("On Time", "Late", "Absent"),
+      status: DataTypes.ENUM("On Time", "Late", "Absent", "Leave"),
       location: DataTypes.STRING, // Geolocation data
     },
     {

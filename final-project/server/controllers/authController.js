@@ -36,15 +36,12 @@ const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: false,
-      secure: true,
+      secure: false,
       maxAge: 3600000,
       path: "/",
       domain: ".asse.devtunnels.ms",
-      sameSite: "None",
+      sameSite: "Lax",
     });
-
-    user.status = "Online";
-    await user.save();
 
     res.status(200).json({ message: "Login successful", user, token });
   } catch (error) {
@@ -54,24 +51,23 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  const { username } = req.body;
   try {
-    const user = await Users.findOne({
-      where: { username },
-    });
+    console.log("Token:", req.cookies.token);
 
-    if (!user) {
-      res.status(404).json({ message: "Not Found" });
-    }
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
-    user.status = "Offline";
-
-    await user.save();
+    console.log("Header Token:", token);
 
     res.clearCookie("token", {
-      httpOnly: true,
-      secure: true,
+      httpOnly: false, // Matches the httpOnly setting from login
+      secure: false, // Matches the secure setting from login
+      sameSite: "Lax", // Matches the SameSite setting from login
+      path: "/", // Make sure the path matches as well
+      domain: ".asse.devtunnels.ms",
     });
+
+    // localStorage.removeItem("token");
 
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
@@ -108,21 +104,27 @@ const requestPasswordReset = async (req, res) => {
 
     // Membuat token reset password menggunakan JWT
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h", // Token kedaluwarsa dalam 1 jam
+      expiresIn: "30m", // Token kedaluwarsa dalam 30 menit
     });
 
     // URL untuk halaman reset password
-    const resetLink = `http://10.10.101.187:5173/reset-password?token=${token}`;
+    const resetLink = `https://bhf9dmsr-5173.asse.devtunnels.ms/reset-password?token=${token}`;
 
     // Kirim email ke pengguna dengan tautan reset password menggunakan SendGrid
     const msg = {
       to: email, // Email tujuan adalah email dari tabel Employees
       from: "ars.hsrps@gmail.com", // Email pengirim
-      subject: "Password Reset Request",
+      subject: "Reset Your ARS Office Attendance Account Password",
       html: `
-        <p>You requested for a password reset. Click the link below to reset your password:</p>
-        <a href="${resetLink}">${resetLink}</a>
-      `,
+    <p>Dear ${employee.first_name} ${employee.last_name},</p>
+    <p>We received a request to reset the password for your ARS Office Attendance account.</p>
+    <p>If you requested this, please click the link below to reset your password:</p>
+    <p><a href="${resetLink}" style="color: #007bff; text-decoration: none;">Reset Your Password</a></p>
+    <p>If you did not request a password reset, please ignore this email or contact our support team for assistance.</p>
+    <p>For your security, the link will expire in 30 minutes.</p>
+    <p>Best regards,</p>
+    <p><strong>ARS Office Team</strong></p>
+  `,
     };
 
     await sgMail.send(msg);

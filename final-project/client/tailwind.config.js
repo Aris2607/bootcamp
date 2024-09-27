@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 import daisyui from "daisyui";
 export default {
+  darkMode: "class",
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
@@ -16,6 +17,9 @@ export default {
         "sm-360": "360px",
         "sm-375": "375px",
         "sm-376": "376px",
+      },
+      animation: {
+        fadeIn: "fadeIn 0.5s ease-in-out",
       },
     },
   },

@@ -18,10 +18,10 @@ export default defineConfig({
     port: 5173,
     // https: {
     //   key: fs.readFileSync(
-    //     path.resolve(__dirname, "../server/ssl/localhost+2-key.pem")
+    //     path.resolve(__dirname, "../server/ssl/192.168.1.8-key.pem")
     //   ),
     //   cert: fs.readFileSync(
-    //     path.resolve(__dirname, "../server/ssl/localhost+2.pem")
+    //     path.resolve(__dirname, "../server/ssl/192.168.1.8.pem")
     //   ),
     // },
   },

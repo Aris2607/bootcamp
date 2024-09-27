@@ -1,13 +1,13 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import PrivateRoute from "../components/PrivateRoute";
-import AdminPage from "../pages/admin/AdminPage";
-import SuperAdminDashboard from "../pages/super_admin/SuperAdminDashboard";
 import Dashboard from "../pages/user/Dashboard";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import { useSelector, useDispatch } from "react-redux";
 import { setIsAuthenticated } from "../store/slices/authSlice";
+import PrivateRoute from "../components/PrivateRoute";
+import AdminPage from "../pages/admin/AdminPage";
+import SuperAdminDashboard from "../pages/super_admin/SuperAdminDashboard";
 import Cookies from "js-cookie";
 import ForgotPassword from "../pages/ForgotPassword";
 import EmployeeList from "../pages/admin/EmployeeList";
@@ -20,6 +20,11 @@ import EmployeeChat from "../pages/user/EmployeeChat";
 import EmployeeLeavePage from "../pages/user/EmployeeLeavePage";
 import LeaveSection from "../pages/admin/LeaveSection";
 import NotificationPage from "../pages/NotificationPage";
+import LoginForm from "../pages/LoginForm";
+import AdminList from "../pages/admin/AdminList";
+import AttendanceHistory from "../pages/user/AttendanceHistory";
+import RolesManagement from "../pages/super_admin/RolesManagement";
+import ReportPage from "../pages/admin/ReportPage";
 
 const AppRoutes = () => {
   const { user, isAuthenticated, token } = useSelector((state) => state.auth);
@@ -50,6 +55,8 @@ const AppRoutes = () => {
             <Route path="/dashboard" element={<Navigate to="/admin" />} />
             <Route path="/employees-list" element={<EmployeeList />} />
             <Route path="/leave" element={<LeaveSection />} />
+            <Route path="/admin-list" element={<AdminList />} />
+            <Route path="/report" element={<ReportPage />} />
             <Route
               path="/employee-management"
               element={<EmployeeManagement />}
@@ -64,6 +71,9 @@ const AppRoutes = () => {
             <Route path="/super-admin" element={<SuperAdminDashboard />} />
             <Route path="/admin" element={<Navigate to="/super-admin" />} />
             <Route path="/dashboard" element={<Navigate to="/super-admin" />} />
+            <Route path="/employees-list" element={<EmployeeList />} />
+            <Route path="/admin-list" element={<AdminList />} />
+            <Route path="/roles" element={<RolesManagement />} />
           </>
         );
       case 1:
@@ -76,6 +86,7 @@ const AppRoutes = () => {
             <Route path="/chat" element={<EmployeeChat />} />
             <Route path="/leave" element={<EmployeeLeavePage />} />
             <Route path="/notif" element={<NotificationPage />} />
+            <Route path="/attendance-history" element={<AttendanceHistory />} />
           </>
         );
       default:
@@ -87,11 +98,12 @@ const AppRoutes = () => {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" /> : <Login />}
+        element={isAuthenticated ? <Navigate to="/" /> : <LoginForm />}
       />
       <Route path="/reset" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/create-password" element={<CreatePassword />} />
+      {/* <Route path="/login-form" element={<LoginForm />} /> */}
       <Route element={<PrivateRoute />}>{roleBasedRoutes()}</Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

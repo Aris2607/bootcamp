@@ -1,15 +1,28 @@
-import React, { useState } from "react";
-import { createData } from "../../services/Api";
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
+import React, { useState, useEffect } from "react";
+import { createData, getData } from "../../services/Api";
+import { showSuccessAlert } from "../../utils/alert";
 
-export default function AdminModal({ setIsLoading, isOpen, onClose }) {
+export default function AdminModal({
+  title,
+  mode,
+  setIsLoading,
+  isOpen,
+  onClose,
+  setCurrentPage,
+  refreshData,
+}) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [department, setDepartment] = useState("");
-  const [position, setPosition] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState("");
   const [profile, setProfile] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(null); // State for preview
+  const [profilePreview, setProfilePreview] = useState(null);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
@@ -32,13 +45,10 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
 
         console.log("File upload response:", fileResponse);
 
-        if (fileResponse.data && fileResponse.message) {
+        if (fileResponse.data && fileResponse.data.filename) {
           profileUrl = fileResponse.data.filename;
         } else {
-          console.error(
-            "File upload response does not contain 'url'.",
-            fileResponse
-          );
+          console.error("File upload failed:", fileResponse);
           setError(["File upload failed."]);
           setIsLoading(false);
           return;
@@ -51,48 +61,90 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
         last_name: lastName,
         email,
         phone_number: phone,
-        department_id: department,
-        position_id: position,
+        department_id: selectedDepartment, // Use selectedDepartment
+        position_id: selectedPosition, // Use selectedPosition
         profile_picture: profileUrl,
       };
 
       const response = await createData("/employee", employeeData);
       console.log(response);
 
-      const username = createUser(
-        response.data.first_name,
-        response.data.createdAt
-      );
+      if (response) {
+        const username = createUser(
+          response.data.first_name,
+          response.data.createdAt
+        );
 
-      const userResponse = await createData("/user", {
-        employee_id: response.data.id,
-        username,
-        password: null,
-        role_id: 1,
-      });
+        if (mode === "employee") {
+          await createData("/user", {
+            employee_id: response.data.id,
+            username,
+            password: null,
+            role_id: 1,
+          });
+        }
 
-      console.log("User Response:", userResponse);
+        if (mode === "admin") {
+          await createData("/user", {
+            employee_id: response.data.id,
+            username,
+            password: null,
+            role_id: 2,
+          });
+        }
 
-      const response2 = await createData("/send-create-password", {
-        email,
-        username,
-      });
+        const dataArray = Array.from({ length: 5 }, (_, i) => ({
+          employee_id: response.data.id,
+          schedule_id: i + 1,
+        }));
 
-      console.log("Response2:", response2);
+        await createData("/employee/schedule", { dataArray });
 
-      clearField();
-      onClose();
+        await createData("/send-create-password", {
+          email,
+          username,
+        });
+
+        showSuccessAlert("Success", "Employee Added Successfully");
+        refreshData();
+        setCurrentPage(1);
+        clearField();
+        onClose();
+      }
     } catch (err) {
       console.error("Error uploading or saving data:", err);
       setError(err.errors || ["An error occurred"]);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set loading to false
+    }
+  };
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const response = await getData("/departments");
+      setDepartments(response);
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const handleDepartmentChange = async (e) => {
+    const departmentId = e.target.value;
+    setSelectedDepartment(departmentId);
+
+    if (departmentId) {
+      const response = await getData(
+        `/positions?department_id=${departmentId}`
+      );
+      setPositions(response);
+    } else {
+      setPositions([]);
+      setSelectedPosition(""); // Reset selected position if no department
     }
   };
 
   const createUser = (first_name, num) => {
     const unique = new Date(num).toLocaleTimeString("id-ID").split(".");
-
     let temp = first_name;
 
     unique.slice(1).forEach((uniq) => {
@@ -107,10 +159,10 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
     setLastName("");
     setEmail("");
     setPhone("");
-    setDepartment("");
-    setPosition("");
     setProfile(null);
-    setProfilePreview(null); // Clear the preview
+    setProfilePreview(null);
+    setSelectedDepartment(""); // Reset selected department
+    setSelectedPosition(""); // Reset selected position
   };
 
   const handleFileChange = (e) => {
@@ -124,6 +176,8 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
       setProfilePreview(null);
     }
   };
+
+  console.log("ERROR:", error);
 
   return (
     <div
@@ -144,7 +198,7 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
       >
         <div className="flex items-center justify-between border-b pb-4">
           <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Add New Employee
+            {title}
           </h3>
           <button
             type="button"
@@ -178,31 +232,35 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
                   : ""
               }
             >
-              {error && error.map((err, i) => <li key={i}>{err.msg}</li>)}
+              {error && error > 1 ? (
+                error.map((err, i) => <li key={i}>{err}</li>)
+              ) : (
+                <li>{error}</li>
+              )}
             </ul>
             <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
-              <div className="block mt-2 mx-1">
+              <div className="block mt-2 mx-1 text-black dark:text-white">
                 <label htmlFor="first_name" className="text-xl">
                   First Name
                 </label>
                 <input
                   type="text"
                   name="first_name"
-                  className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
                   id="first_name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
               </div>
-              <div className="block mt-2">
+              <div className="block mt-2 text-black dark:text-white">
                 <label htmlFor="last_name" className="text-xl">
                   Last Name
                 </label>
                 <input
                   type="text"
                   name="last_name"
-                  className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
                   id="last_name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -210,28 +268,28 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
                 />
               </div>
             </div>
-            <div className="block mt-2">
+            <div className="block mt-2 text-black dark:text-white">
               <label htmlFor="email" className="text-xl">
                 Email
               </label>
               <input
                 type="email"
                 name="email"
-                className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-            <div className="block mt-2">
+            <div className="block mt-2 text-black dark:text-white">
               <label htmlFor="phone_number" className="text-xl">
                 Phone Number
               </label>
               <input
                 type="number"
                 name="phone_number"
-                className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
                 id="phone_number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -239,36 +297,43 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
               />
             </div>
             <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
-              <div className="block mt-2">
-                <label htmlFor="department" className="text-xl">
-                  Department
-                </label>
+              <div className="block mt-2 text-black dark:text-white">
+                <label htmlFor="department">Department:</label>
                 <select
-                  onChange={(e) => setDepartment(e.target.value)}
-                  value={department}
-                  className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  id="department"
+                  value={selectedDepartment}
+                  onChange={handleDepartmentChange}
+                  className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  required
                 >
-                  <option value="">-- Select Department --</option>
-                  <option value="1">Department 1</option>
-                  <option value="2">Department 2</option>
+                  <option value="">Select Department</option>
+                  {Array.isArray(departments) &&
+                    departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
                 </select>
               </div>
-              <div className="block mt-2">
-                <label htmlFor="position" className="text-xl">
-                  Position
-                </label>
+              <div className="block mt-2 text-black dark:text-white">
+                <label htmlFor="position">Position:</label>
                 <select
-                  onChange={(e) => setPosition(e.target.value)}
-                  value={position}
-                  className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  id="position"
+                  value={selectedPosition}
+                  onChange={(e) => setSelectedPosition(e.target.value)}
+                  className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                  required
                 >
-                  <option value="">-- Select Position --</option>
-                  <option value="1">Position 1</option>
-                  <option value="2">Position 2</option>
+                  <option value="">Select Position</option>
+                  {positions.map((pos) => (
+                    <option key={pos.id} value={pos.id}>
+                      {pos.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
-            <div className="block mt-2">
+            <div className="block mt-2 text-black dark:text-white">
               <label htmlFor="profile" className="text-xl">
                 Profile Picture
               </label>
@@ -276,7 +341,7 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
                 type="file"
                 accept="image/*"
                 name="profile"
-                className="py-1 px-1 w-full bg-slate-100 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
+                className="py-1 px-1 w-full bg-slate-100 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-200 focus:shadow-md focus:shadow-cyan-100 text-md"
                 id="profile"
                 onChange={handleFileChange}
               />
@@ -302,7 +367,10 @@ export default function AdminModal({ setIsLoading, isOpen, onClose }) {
               <button
                 type="button"
                 className="ml-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                onClick={onClose}
+                onClick={() => {
+                  clearField();
+                  onClose();
+                }}
               >
                 Cancel
               </button>

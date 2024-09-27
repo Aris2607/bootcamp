@@ -1,0 +1,32 @@
+/* Ensure you adjust the class names based on your inspection */
+.custom-datepicker .rdtDays {
+  background-color: white !important; /* Change this to your desired color */
+  color: black; /* Change text color if necessary */
+}
+
+.custom-datepicker .rdtMonth, /* Adjust for month dropdown if needed */
+.custom-datepicker .rdtYear {
+  /* Adjust for year dropdown if needed */
+  background-color: white !important; /* Set background for month and year selectors */
+  color: black; /* Ensure text is readable */
+}
+
+.custom-datepicker .rdtDays td {
+  background-color: white !important; /* Cell background */
+  color: black; /* Cell text color */
+}
+
+.custom-datepicker .rdtDays td:hover {
+  background-color: #f0f0f0 !important; /* Change background color on hover for better visibility */
+}
+
+.custom-datepicker .rdtDays td.rdtNewMonth {
+  background-color: #f0f0f0 !important; /* Adjust background for new month */
+}
+
+/* Ensure you target the correct container for the calendar */
+.rmdp-calendar {
+  background-color: white !important; /* Change to your desired background color */
+  color: black; /* Change text color to ensure it's visible */
+  border: 1px solid #ccc; /* Optional: Add border for visibility */
+}

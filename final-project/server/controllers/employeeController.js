@@ -4,6 +4,9 @@ const {
   Departments,
   Divisions,
   Sequelize,
+  Users,
+  Roles,
+  EmployeeSchedules,
 } = require("../models");
 const { validationResult } = require("express-validator");
 
@@ -13,15 +16,19 @@ const create = async (req, res) => {
   const existsEmployee = await Employees.findOne({
     where: { email: req.body.email },
   });
+
   if (existsEmployee) {
     return res.status(400).json({ errors: "Email is already in use" });
   }
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ error: errors.array() });
   }
 
   try {
-    const employee = await Employees.create({ ...req.body });
+    const employee = await Employees.create({
+      ...req.body,
+      division_id: req.body.department_id,
+    });
     res.status(201).json({ data: employee });
   } catch (err) {
     res.status(500).json({ error: "Unable to create employee" });
@@ -66,6 +73,13 @@ const getById = async (req, res) => {
           model: Divisions,
           attributes: ["id"],
         },
+        {
+          model: Users,
+          include: {
+            model: Roles,
+            attributes: ["role_name"],
+          },
+        },
       ],
     });
     if (!employee) {
@@ -79,7 +93,8 @@ const getById = async (req, res) => {
 };
 
 const getEmployee = async (req, res) => {
-  const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit of 10
+  const { page = 1, limit = 5 } = req.query; // Default to page 1 and limit of 10
+  const { role_id } = req.params;
   const offset = (page - 1) * limit;
 
   try {
@@ -94,6 +109,16 @@ const getEmployee = async (req, res) => {
         {
           model: Departments,
           attributes: ["name"],
+        },
+        {
+          model: Users,
+          where: {
+            role_id,
+          },
+          include: {
+            model: Roles,
+            attributes: ["role_name"],
+          },
         },
       ],
       order: [["updatedAt", "DESC"]],
@@ -147,19 +172,92 @@ const getByName = async (req, res) => {
   }
 };
 
+const createEmployeeSchedule = async (req, res) => {
+  const { dataArray } = req.body;
+
+  try {
+    const createdData = [];
+    console.log("DATA ARRAY:", dataArray);
+    for (data of dataArray) {
+      const newData = await EmployeeSchedules.create(data);
+      createdData.push(newData);
+    }
+    res.status(201).json(createdData);
+  } catch (error) {
+    res.status(500).json({ message: "Unable to create employee schedule" });
+  }
+};
+
+const createEmployeeBatch = async (req, res) => {
+  const { data } = req.body;
+  const errors = validationResult(req);
+
+  try {
+    const result = [];
+    for (let key in data) {
+      if (data.hasOwnProperty(key)) {
+        const employee = data[key];
+
+        const existsEmployee = await Employees.findOne({
+          where: { email: employee.email },
+        });
+
+        if (existsEmployee) {
+          return res.status(400).json({ errors: "Email is already in use" });
+        }
+        if (!errors.isEmpty()) {
+          return res.status(400).json({ error: errors.array() });
+        }
+
+        const newEmployee = await Employees.create({
+          first_name: employee.first_name,
+          last_name: employee.last_name,
+          email: employee.email,
+          phone_number: employee.phone_number,
+          department_id: employee.department_id,
+          position_id: employee.position_id,
+          division_id: employee.department_id,
+          profile_picture: "default.png",
+        });
+
+        const employee_id = newEmployee.id;
+
+        const user = createUser(employee.first_name);
+
+        await Users.create({
+          employee_id,
+          username: user,
+          password: null,
+          role_id: 1,
+        });
+        result.push(newEmployee);
+      }
+    }
+
+    console.log("RESULT:", result);
+
+    console.log("YOU ARE HERE");
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Unable to upload employee batch", error });
+  }
+};
+
 const searchEmployee = async (req, res) => {
   const { keyword } = req.body;
   const { page = 1, limit = 10 } = req.query;
+  const { role_id } = req.params;
   const offset = (page - 1) * limit;
 
   try {
     const employees = await Employees.findAndCountAll({
       where: {
         [Sequelize.Op.or]: [
-          { first_name: { [Sequelize.Op.like]: `%${keyword}%` } },
-          { last_name: { [Sequelize.Op.like]: `%${keyword}%` } },
-          { email: { [Sequelize.Op.like]: `%${keyword}%` } },
-          { phone_number: { [Sequelize.Op.like]: `%${keyword}%` } },
+          { first_name: { [Sequelize.Op.iLike]: `%${keyword}%` } },
+          { last_name: { [Sequelize.Op.iLike]: `%${keyword}%` } },
+          { email: { [Sequelize.Op.iLike]: `%${keyword}%` } },
+          { phone_number: { [Sequelize.Op.iLike]: `%${keyword}%` } },
           // Assuming `position` is a field in `Employees`, but you might need to adjust this
         ],
       },
@@ -173,6 +271,16 @@ const searchEmployee = async (req, res) => {
         {
           model: Departments,
           attributes: ["name"],
+        },
+        {
+          model: Users,
+          where: {
+            role_id,
+          },
+          include: {
+            model: Roles,
+            attributes: ["role_name"],
+          },
         },
       ],
       order: [["updatedAt", "DESC"]],
@@ -194,21 +302,62 @@ const searchEmployee = async (req, res) => {
   }
 };
 
+// const updateEmployee = async (req, res) => {
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     return res.status(400).json({ errors: errors.array() });
+//   }
+
+//   try {
+//     const employee = await Employees.findByPk(req.params.id);
+//     if (!employee) {
+//       return res.status(404).json({ error: "Employee not found" });
+//     }
+//     await employee.update(req.body);
+//     res.status(200).json(employee);
+//   } catch (err) {
+//     res.status(500).json({ error: "Unable to update employee" });
+//   }
+// };
+
 const updateEmployee = async (req, res) => {
+  const { id } = req.params;
+  const {
+    first_name,
+    last_name,
+    email,
+    phone_number,
+    department_id,
+    position_id,
+  } = req.body;
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
 
   try {
-    const employee = await Employees.findByPk(req.params.id);
+    // Cari karyawan berdasarkan ID
+    const employee = await Employees.findByPk(id);
+
     if (!employee) {
-      return res.status(404).json({ error: "Employee not found" });
+      return res.status(404).json({ message: "Employee not found" });
     }
-    await employee.update(req.body);
-    res.status(200).json(employee);
-  } catch (err) {
-    res.status(500).json({ error: "Unable to update employee" });
+
+    // Update data karyawan
+    await employee.update({
+      first_name,
+      last_name,
+      email,
+      phone_number,
+      department_id,
+      position_id,
+    });
+
+    return res.status(200).json(employee);
+  } catch (error) {
+    console.error("Error updating employee:", error);
+    return res.status(500).json({ message: "Error updating employee" });
   }
 };
 
@@ -226,13 +375,26 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
+const createUser = (first_name) => {
+  const unique = new Date().toLocaleTimeString("id-ID").split(".");
+  let temp = first_name;
+
+  unique.slice(1).forEach((uniq) => {
+    temp += uniq;
+  });
+
+  return temp;
+};
+
 module.exports = {
   create,
+  createEmployeeBatch,
   getAll,
   getEmployee,
   getById,
   getByName,
   updateEmployee,
   deleteEmployee,
+  createEmployeeSchedule,
   searchEmployee,
 };
